@@ -4,7 +4,10 @@ import { getProject, listProjects, setProjectArchived, upsertProjects } from './
 import { getSetting, setSetting } from './db/settings'
 import { getLastCommitAt, getRecentCommits, getRepoStatus } from './services/git'
 import { openFolder, openInVSCode } from './services/launcher'
+import { DEFAULT_IDLE_MINUTES, IDLE_MINUTES_KEY } from './services/idle'
 import { detectStack, findRepos, projectName } from './services/scanner'
+import { pauseSession, resumeSession, startSession, stopSession } from './services/sessions'
+import { getActiveSession, getStats, listSessions } from './db/sessions'
 import type { AppInfo, ScanResult } from '../shared/api'
 
 const ROOTS_KEY = 'projectRoots'
@@ -57,6 +60,26 @@ export function registerIpc(): void {
     setSetting(ROOTS_KEY, next)
     return next
   })
+
+  ipcMain.handle('settings:getIdleMinutes', () =>
+    getSetting(IDLE_MINUTES_KEY, DEFAULT_IDLE_MINUTES)
+  )
+  ipcMain.handle('settings:setIdleMinutes', (_, minutes: number) => {
+    const clamped = Math.min(120, Math.max(1, Math.round(minutes)))
+    setSetting(IDLE_MINUTES_KEY, clamped)
+    return clamped
+  })
+
+  // sessions
+  ipcMain.handle('sessions:getActive', () => getActiveSession())
+  ipcMain.handle('sessions:start', (_, projectId: number) => startSession(projectId))
+  ipcMain.handle('sessions:pause', () => pauseSession('manual'))
+  ipcMain.handle('sessions:resume', () => resumeSession())
+  ipcMain.handle('sessions:stop', (_, note: string | null) => stopSession(note))
+  ipcMain.handle('sessions:list', (_, projectId: number | null, limit: number) =>
+    listSessions(projectId, limit)
+  )
+  ipcMain.handle('sessions:stats', () => getStats(Date.now()))
 
   // projects
   ipcMain.handle('projects:list', () => listProjects())

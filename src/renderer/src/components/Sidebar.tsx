@@ -1,5 +1,6 @@
 import { FolderGit2, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react'
 import type { Navigate, Route } from '../lib/navigation'
+import { SessionBar } from './SessionBar'
 
 type NavPage = 'dashboard' | 'projects' | 'settings'
 
@@ -59,6 +60,7 @@ export function Sidebar({
       <nav className="flex flex-1 flex-col gap-1">
         {items.map((i) => navButton(i.page, i.label, i.icon))}
       </nav>
+      <SessionBar navigate={navigate} />
       {navButton('settings', 'settings', Settings)}
     </aside>
   )

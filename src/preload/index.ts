@@ -8,7 +8,23 @@ const api: Api = {
   settings: {
     getRoots: () => ipcRenderer.invoke('settings:getRoots'),
     addRoot: () => ipcRenderer.invoke('settings:addRoot'),
-    removeRoot: (root) => ipcRenderer.invoke('settings:removeRoot', root)
+    removeRoot: (root) => ipcRenderer.invoke('settings:removeRoot', root),
+    getIdleMinutes: () => ipcRenderer.invoke('settings:getIdleMinutes'),
+    setIdleMinutes: (minutes) => ipcRenderer.invoke('settings:setIdleMinutes', minutes)
+  },
+  sessions: {
+    getActive: () => ipcRenderer.invoke('sessions:getActive'),
+    start: (projectId) => ipcRenderer.invoke('sessions:start', projectId),
+    pause: () => ipcRenderer.invoke('sessions:pause'),
+    resume: () => ipcRenderer.invoke('sessions:resume'),
+    stop: (note) => ipcRenderer.invoke('sessions:stop', note),
+    list: (projectId, limit) => ipcRenderer.invoke('sessions:list', projectId, limit),
+    stats: () => ipcRenderer.invoke('sessions:stats'),
+    onChanged: (listener) => {
+      const handler = (): void => listener()
+      ipcRenderer.on('sessions:changed', handler)
+      return () => ipcRenderer.removeListener('sessions:changed', handler)
+    }
   },
   projects: {
     list: () => ipcRenderer.invoke('projects:list'),

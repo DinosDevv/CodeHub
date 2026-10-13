@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { closeDb, getDb } from './db'
 import { registerIpc } from './ipc'
+import { pauseForQuit, startIdleWatch } from './services/idle'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -48,6 +49,7 @@ app.whenReady().then(() => {
 
   getDb()
   registerIpc()
+  startIdleWatch()
   createWindow()
 
   app.on('activate', function () {
@@ -62,5 +64,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  pauseForQuit()
   closeDb()
 })

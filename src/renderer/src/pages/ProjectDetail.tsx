@@ -1,4 +1,5 @@
 import { ArrowLeft, Code, Eye, EyeOff, FolderOpen, GitCommitHorizontal } from 'lucide-react'
+import { ProjectSessions } from '../components/ProjectSessions'
 import { RepoBadges } from '../components/RepoBadges'
 import { Button, Card, Chip, EmptyState, PageHeader } from '../components/ui'
 import { useCommits, useRepoStatus } from '../hooks/useGit'
@@ -87,7 +88,8 @@ export function ProjectDetail({
               <Chip tone="danger">folder missing</Chip>
             )}
           </Card>
-          <Card title="tasks & sessions" delay={180}>
+          <ProjectSessions projectId={project.id} delay={180} />
+          <Card title="tasks" delay={240}>
             <EmptyState>coming soon — they&apos;ll live right here.</EmptyState>
           </Card>
         </div>
