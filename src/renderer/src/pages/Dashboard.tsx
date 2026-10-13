@@ -1,4 +1,5 @@
 import { Coffee, Play } from 'lucide-react'
+import { ClaudeNow } from '../components/ClaudeNow'
 import { OpenTasks } from '../components/OpenTasks'
 import { Button, Card, EmptyState, PageHeader } from '../components/ui'
 import { useActiveSession } from '../hooks/useActiveSession'
@@ -52,8 +53,9 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
         </Card>
 
         <OpenTasks navigate={navigate} className="lg:col-span-2" delay={240} />
+        <ClaudeNow navigate={navigate} className="lg:col-span-1" delay={270} />
 
-        <Card title="this week by project" className="lg:order-last lg:col-span-3" delay={360}>
+        <Card title="this week by project" className="lg:col-span-2" delay={300}>
           {!stats || stats.byProject.length === 0 ? (
             <EmptyState>no sessions this week yet — the first one&apos;s the coziest.</EmptyState>
           ) : (
@@ -86,7 +88,7 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
           )}
         </Card>
 
-        <Card title="recent sessions" delay={300}>
+        <Card title="recent sessions" delay={330}>
           {!stats || stats.recent.length === 0 ? (
             <div className="flex items-center gap-2 text-sm text-muted">
               <Coffee size={16} className="text-accent" /> nothing yet.

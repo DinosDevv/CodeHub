@@ -1,5 +1,7 @@
 import { ChevronDown, Sparkles, SquareTerminal, X } from 'lucide-react'
+import { useClaudeLive } from '../hooks/useClaude'
 import { useBusyTerminals, useDock, useTerminals } from '../hooks/useTerminals'
+import { claudeStates, type ClaudeLive } from '../lib/claude'
 import { closeDock, setActiveTerminal, setDockHeight } from '../lib/dock'
 import { closeTerminal, type TerminalInfo } from '../lib/terminals'
 import { NewTerminalMenu } from './NewTerminalMenu'
@@ -14,6 +16,7 @@ export function TerminalDock({
   const dock = useDock()
   const terminals = useTerminals()
   const busy = useBusyTerminals()
+  const claude = useClaudeLive()
 
   if (!dock.open) return null
   const active =
@@ -42,7 +45,13 @@ export function TerminalDock({
       <header className="flex items-center gap-1 px-3 pt-2 pb-1.5">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
           {terminals.map((t) => (
-            <Tab key={t.id} terminal={t} active={t.id === active?.id} busy={busy.has(t.id)} />
+            <Tab
+              key={t.id}
+              terminal={t}
+              active={t.id === active?.id}
+              busy={busy.has(t.id)}
+              claude={claude.find((c) => c.terminalId === t.id) ?? null}
+            />
           ))}
         </div>
         <NewTerminalMenu contextProjectId={contextProjectId} />
@@ -72,22 +81,28 @@ export function TerminalDock({
 function Tab({
   terminal,
   active,
-  busy
+  busy,
+  claude
 }: {
   terminal: TerminalInfo
   active: boolean
   busy: boolean
+  /** Live Claude status, when Claude Code runs in this tab. */
+  claude: ClaudeLive | null
 }): React.JSX.Element {
   const exited = terminal.exitCode !== null
   const Icon = terminal.kind === 'claude' ? Sparkles : SquareTerminal
 
-  const dot = exited
-    ? terminal.exitCode === 0
-      ? 'bg-success'
-      : 'bg-danger'
-    : busy
-      ? 'bg-accent shadow-[0_0_8px_var(--color-accent)] animate-breathe'
-      : 'bg-muted/50'
+  const claudeState = claude && !exited ? claudeStates[claude.state] : null
+  const dot = claudeState
+    ? claudeState.dot
+    : exited
+      ? terminal.exitCode === 0
+        ? 'bg-success'
+        : 'bg-danger'
+      : busy
+        ? 'bg-accent shadow-[0_0_8px_var(--color-accent)] animate-breathe'
+        : 'bg-muted/50'
 
   return (
     <div
@@ -98,7 +113,11 @@ function Tab({
           ? 'bg-surface-2 text-fg shadow-[inset_0_0_0_1px_var(--color-line)]'
           : 'text-muted hover:bg-surface-2/50 hover:text-fg'
       }`}
-      title={`${terminal.projectName} · ${terminal.title}`}
+      title={
+        claude?.message
+          ? `${terminal.projectName} · ${claudeState?.label}: ${claude.message}`
+          : `${terminal.projectName} · ${terminal.title}`
+      }
     >
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       <Icon size={13} className={terminal.kind === 'claude' ? 'text-accent' : ''} />
@@ -106,6 +125,9 @@ function Tab({
         <span className="font-semibold">{terminal.projectName}</span>
         <span className="opacity-60"> · {terminal.title}</span>
       </span>
+      {claudeState && (
+        <span className={`shrink-0 font-semibold ${claudeState.text}`}>{claudeState.label}</span>
+      )}
       <button
         aria-label="close terminal"
         onClick={(e) => {

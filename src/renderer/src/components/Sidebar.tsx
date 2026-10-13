@@ -3,8 +3,10 @@ import {
   LayoutDashboard,
   Settings,
   SquareTerminal,
+  Waves,
   type LucideIcon
 } from 'lucide-react'
+import { useClaudeLive } from '../hooks/useClaude'
 import { useDock, useTerminals } from '../hooks/useTerminals'
 import { toggleDock } from '../lib/dock'
 import type { Navigate, Route } from '../lib/navigation'
@@ -32,6 +34,7 @@ export function Sidebar({
   const dock = useDock()
   const terminals = useTerminals()
   const running = terminals.filter((t) => t.exitCode === null).length
+  const waiting = useClaudeLive().filter((c) => c.state === 'waiting').length
 
   const navButton = (target: NavPage, label: string, Icon: LucideIcon): React.JSX.Element => {
     const active = current === target
@@ -60,12 +63,12 @@ export function Sidebar({
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-line/50 bg-surface/40 p-4 backdrop-blur-xl">
       <div className="mb-8 flex items-center gap-3 px-2 pt-2">
-        <div className="grid h-10 w-10 animate-breathe place-items-center rounded-2xl bg-gradient-to-br from-accent to-glow font-mono text-sm font-bold text-accent-fg shadow-[0_0_24px_-4px_var(--color-accent)]">
-          {'</>'}
+        <div className="grid h-10 w-10 animate-breathe place-items-center rounded-2xl bg-gradient-to-br from-glow to-accent text-accent-fg shadow-[0_0_24px_-4px_var(--color-glow)]">
+          <Waves size={20} strokeWidth={2.4} />
         </div>
         <div>
-          <div className="text-lg leading-tight font-bold">codehub</div>
-          <div className="text-xs text-muted">your cozy corner</div>
+          <div className="text-lg leading-tight font-bold">lowtide</div>
+          <div className="text-xs text-muted">code with the tide</div>
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
@@ -84,10 +87,16 @@ export function Sidebar({
           className={`transition duration-300 ${dock.open ? 'text-accent' : 'group-hover:text-glow'}`}
         />
         terminal
-        {running > 0 && (
-          <span className="ml-auto rounded-full bg-accent/15 px-2 py-0.5 font-mono text-xs text-accent">
-            {running}
+        {waiting > 0 ? (
+          <span className="ml-auto animate-breathe rounded-full bg-warning/15 px-2 py-0.5 text-xs whitespace-nowrap text-warning">
+            ✦ needs you
           </span>
+        ) : (
+          running > 0 && (
+            <span className="ml-auto rounded-full bg-accent/15 px-2 py-0.5 font-mono text-xs text-accent">
+              {running}
+            </span>
+          )
         )}
       </button>
       {navButton('settings', 'settings', Settings)}

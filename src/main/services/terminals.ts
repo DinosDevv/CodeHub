@@ -6,6 +6,8 @@ import * as pty from 'node-pty'
 import { getProject } from '../db/projects'
 import { getSetting } from '../db/settings'
 import { broadcast, sendToWindows } from '../events'
+import { HOOK_PORT } from './claudeHooks'
+import { forgetTerminal } from './claudeLive'
 import { envWithCurrentPath } from './envPath'
 import type { NewTerminal, TerminalInfo, TerminalShell } from '../../shared/api'
 
@@ -132,12 +134,15 @@ function shellCommand(shell: TerminalShell, run: string | null): { file: string;
 }
 
 /** A clean environment: never leak Electron's own variables into user processes. */
-function childEnv(): Record<string, string> {
+/** Claude's hook reads these to tell Lowtide which tab an event came from. */
+function childEnv(terminalId: number): Record<string, string> {
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(envWithCurrentPath())) {
-    if (!k.startsWith('ELECTRON_') && k !== 'CODEHUB_DATA_DIR') env[k] = v
+    if (!k.startsWith('ELECTRON_') && k !== 'LOWTIDE_DATA_DIR') env[k] = v
   }
   env.COLORTERM = 'truecolor'
+  env.LOWTIDE_TERMINAL_ID = String(terminalId)
+  env.LOWTIDE_HOOK_PORT = String(HOOK_PORT)
   return env
 }
 
@@ -169,17 +174,18 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
   }
 
   const { file, args } = shellCommand(shell, run)
+  const id = nextId++
   const proc = pty.spawn(file, args, {
     name: 'xterm-256color',
     cols: opts.cols ?? 100,
     rows: opts.rows ?? 30,
     cwd: project.path,
-    env: childEnv(),
+    env: childEnv(id),
     useConpty: true
   })
 
   const info: TerminalInfo = {
-    id: nextId++,
+    id,
     projectId: project.id,
     projectName: project.name,
     kind: opts.kind,
@@ -196,6 +202,7 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
     flushTimer ??= setTimeout(flush, FLUSH_MS)
   })
   proc.onExit(({ exitCode }) => {
+    forgetTerminal(id)
     flush()
     info.exitCode = exitCode
     sendToWindows('terminals:exit', info.id, exitCode)
@@ -230,6 +237,7 @@ export function closeTerminal(id: number): void {
   const t = terminals.get(id)
   if (!t) return
   terminals.delete(id)
+  forgetTerminal(id)
   if (t.info.exitCode === null) {
     try {
       t.proc.kill()

@@ -180,6 +180,30 @@ export interface TerminalSupport {
   gitBash: boolean
 }
 
+/** working: busy on your prompt · waiting: needs you (permission/input) · idle: done, your turn */
+export type ClaudeState = 'working' | 'waiting' | 'idle'
+
+export interface ClaudeLive {
+  sessionId: string
+  projectId: number | null
+  projectName: string | null
+  /** The Lowtide terminal it runs in, if any (null for Claude started elsewhere). */
+  terminalId: number | null
+  cwd: string
+  state: ClaudeState
+  /** Last prompt while working, or Claude's notification while waiting. */
+  message: string | null
+  startedAt: number
+  updatedAt: number
+}
+
+export interface ClaudeHooksStatus {
+  installed: boolean
+  /** The hook runs a tiny Node script, so Node must be on PATH. */
+  nodeAvailable: boolean
+  settingsPath: string
+}
+
 /** Every call either resolves with data or rejects with a readable message. */
 export interface Api {
   app: {
@@ -229,6 +253,15 @@ export interface Api {
     onData(listener: (id: number, data: string) => void): () => void
     onExit(listener: (id: number, exitCode: number) => void): () => void
     onChanged(listener: () => void): () => void
+  }
+  claude: {
+    live(): Promise<ClaudeLive[]>
+    hooks(): Promise<ClaudeHooksStatus>
+    installHooks(): Promise<ClaudeHooksStatus>
+    removeHooks(): Promise<ClaudeHooksStatus>
+    onChanged(listener: () => void): () => void
+    /** A notification was clicked: bring this Claude session into view. */
+    onFocus(listener: (live: ClaudeLive) => void): () => void
   }
   projects: {
     list(): Promise<Project[]>

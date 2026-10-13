@@ -6,6 +6,8 @@ import { closeDb, getDb } from './db'
 import { registerIpc } from './ipc'
 import { pauseForQuit, startIdleWatch } from './services/idle'
 import { closeAllTerminals } from './services/terminals'
+import { refreshHookScript } from './services/claudeHooks'
+import { startHookServer, stopHookServer } from './services/hookServer'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -16,7 +18,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#120f1c',
-    title: 'CodeHub',
+    title: 'Lowtide',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -42,9 +44,9 @@ function createWindow(): void {
 }
 
 // A separate data folder (e.g. for testing without touching your real data).
-if (process.env['CODEHUB_DATA_DIR']) app.setPath('userData', process.env['CODEHUB_DATA_DIR'])
+if (process.env['LOWTIDE_DATA_DIR']) app.setPath('userData', process.env['LOWTIDE_DATA_DIR'])
 
-// One CodeHub per data folder: two copies would both run the session clock.
+// One Lowtide per data folder: two copies would both run the session clock.
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
@@ -56,7 +58,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
-    electronApp.setAppUserModelId('com.codehub.app')
+    electronApp.setAppUserModelId('com.lowtide.app')
 
     // F12 toggles DevTools in dev; Ctrl+R is ignored in production.
     app.on('browser-window-created', (_, window) => {
@@ -66,6 +68,8 @@ if (!app.requestSingleInstanceLock()) {
     getDb()
     registerIpc()
     startIdleWatch()
+    startHookServer()
+    refreshHookScript()
     createWindow()
 
     app.on('activate', function () {
@@ -81,6 +85,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('will-quit', () => {
     closeAllTerminals()
+    stopHookServer()
     pauseForQuit()
     closeDb()
   })

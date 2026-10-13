@@ -1,5 +1,5 @@
-appId: com.codehub.app
-productName: CodeHub
+appId: com.lowtide.app
+productName: Lowtide
 directories:
   buildResources: build
 files:
@@ -14,7 +14,7 @@ asarUnpack:
   # native terminal binaries (conpty/winpty helpers) must run from disk
   - node_modules/node-pty/**
 win:
-  executableName: codehub
+  executableName: lowtide
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

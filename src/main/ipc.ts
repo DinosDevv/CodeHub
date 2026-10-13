@@ -20,6 +20,8 @@ import { pauseSession, resumeSession, startSession, stopSession } from './servic
 import { getActiveSession, getStats, listSessions } from './db/sessions'
 import { addTask, deleteTask, listTasks, moveTask, updateTask } from './db/tasks'
 import { broadcast } from './events'
+import { hooksStatus, installHooks, removeHooks } from './services/claudeHooks'
+import { listLive } from './services/claudeLive'
 import {
   closeTerminal,
   createTerminal,
@@ -43,7 +45,7 @@ import type {
 
 const ROOTS_KEY = 'projectRoots'
 
-/** Git and launch calls only ever act on folders CodeHub has scanned. */
+/** Git and launch calls only ever act on folders Lowtide has scanned. */
 function assertKnownPath(path: string): string {
   if (!listProjects().some((p) => p.path === path)) throw new Error('Unknown project folder.')
   return path
@@ -149,6 +151,12 @@ export function registerIpc(): void {
   ipcMain.handle('terminals:setShell', (_, shell: TerminalShell) =>
     setSetting(SHELL_KEY, shell === 'gitbash' ? 'gitbash' : 'powershell')
   )
+
+  // claude
+  ipcMain.handle('claude:live', () => listLive())
+  ipcMain.handle('claude:hooks', () => hooksStatus())
+  ipcMain.handle('claude:installHooks', () => installHooks())
+  ipcMain.handle('claude:removeHooks', () => removeHooks())
 
   // projects
   ipcMain.handle('projects:list', () => listProjects())

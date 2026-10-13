@@ -1,4 +1,4 @@
-# codehub
+# lowtide
 
 A cozy, personal coding command center. Open it at the start of every coding session: it knows your projects, tracks your time and tasks, and ties together VS Code, git and Claude Code.
 
@@ -26,8 +26,8 @@ npm run build:win
 
 ## Testing without touching your data
 
-Set `CODEHUB_DATA_DIR` to run against a separate database:
+Set `LOWTIDE_DATA_DIR` to run against a separate database:
 
 ```bash
-CODEHUB_DATA_DIR=/tmp/codehub-test npm run dev
+LOWTIDE_DATA_DIR=/tmp/lowtide-test npm run dev
 ```

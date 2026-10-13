@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Api } from '../shared/api'
+import type { Api, ClaudeLive } from '../shared/api'
 
 function subscribe(channel: string, listener: () => void): () => void {
   const handler = (): void => listener()
@@ -58,6 +58,18 @@ const api: Api = {
       return () => ipcRenderer.removeListener('terminals:exit', handler)
     },
     onChanged: (listener) => subscribe('terminals:changed', listener)
+  },
+  claude: {
+    live: () => ipcRenderer.invoke('claude:live'),
+    hooks: () => ipcRenderer.invoke('claude:hooks'),
+    installHooks: () => ipcRenderer.invoke('claude:installHooks'),
+    removeHooks: () => ipcRenderer.invoke('claude:removeHooks'),
+    onChanged: (listener) => subscribe('claude:changed', listener),
+    onFocus: (listener) => {
+      const handler = (_: unknown, live: ClaudeLive): void => listener(live)
+      ipcRenderer.on('claude:focus', handler)
+      return () => ipcRenderer.removeListener('claude:focus', handler)
+    }
   },
   projects: {
     list: () => ipcRenderer.invoke('projects:list'),

@@ -28,7 +28,7 @@ export function ClaudeInstallDialog(): React.JSX.Element | null {
       close()
       toast('claude code found ✦ open a claude tab with +', 'success')
     } else {
-      toast("still can't find `claude` — a restart of codehub may help after installing")
+      toast("still can't find `claude` — a restart of lowtide may help after installing")
     }
   }
 

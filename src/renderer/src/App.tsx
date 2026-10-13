@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar'
 import { TerminalDock } from './components/TerminalDock'
 import { Toaster } from './components/Toaster'
 import { useActiveSession } from './hooks/useActiveSession'
+import { useClaudeFocus } from './hooks/useClaude'
 import { useDockShortcut } from './hooks/useTerminals'
 import { routeKey, type Route } from './lib/navigation'
 import { Dashboard } from './pages/Dashboard'
@@ -17,6 +18,7 @@ function App(): React.JSX.Element {
   const [route, navigate] = useState<Route>({ page: 'dashboard' })
   const { active } = useActiveSession()
   useDockShortcut()
+  useClaudeFocus(navigate)
 
   // New terminals default to the project you're looking at, else the one you're working on.
   const contextProjectId = route.page === 'project' ? route.id : (active?.projectId ?? null)

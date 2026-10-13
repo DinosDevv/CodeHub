@@ -1,6 +1,7 @@
 import { RootFolders } from '../components/RootFolders'
-import { Card, PageHeader } from '../components/ui'
+import { Button, Card, Chip, PageHeader } from '../components/ui'
 import { useAppInfo } from '../hooks/useAppInfo'
+import { useHooksStatus } from '../hooks/useClaude'
 import { useIdleMinutes } from '../hooks/useIdleMinutes'
 import { useRoots } from '../hooks/useRoots'
 import { useShellSetting, useTerminalSupport } from '../hooks/useTerminals'
@@ -13,6 +14,7 @@ export function Settings(): React.JSX.Element {
   const { roots, add, remove } = useRoots()
   const idle = useIdleMinutes()
   const shell = useShellSetting()
+  const hooks = useHooksStatus()
   const support = useTerminalSupport()
   const shells: { id: TerminalShell; label: string; available: boolean }[] = [
     { id: 'powershell', label: 'powershell', available: true },
@@ -76,6 +78,48 @@ export function Settings(): React.JSX.Element {
             claude code: {support === null ? '…' : support.claude ? 'installed ✦' : 'not installed'}{' '}
             · toggle the terminal with Ctrl+`
           </p>
+        </Card>
+        <Card title="claude code" delay={165}>
+          <p className="text-sm text-muted">
+            connect claude code so lowtide can show what it&apos;s doing — working, needs you, or
+            your turn — on its terminal tab and the dashboard, and tap you on the shoulder when it
+            needs you.
+          </p>
+          {hooks.status && (
+            <>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {hooks.status.installed ? (
+                  <Chip tone="success">connected ✦</Chip>
+                ) : (
+                  <Chip>not connected</Chip>
+                )}
+                {hooks.status.installed ? (
+                  <Button variant="ghost" disabled={hooks.busy} onClick={hooks.remove}>
+                    disconnect
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={hooks.busy || !hooks.status.nodeAvailable}
+                    onClick={hooks.install}
+                  >
+                    connect claude code
+                  </Button>
+                )}
+              </div>
+              {!hooks.status.nodeAvailable && (
+                <p className="mt-2 text-xs text-danger">
+                  needs node.js on your PATH — the hook is a tiny node script.
+                </p>
+              )}
+              <p className="mt-3 text-xs text-muted">
+                this adds a few hooks to{' '}
+                <span className="font-mono select-text">{hooks.status.settingsPath}</span> (a backup
+                is saved next to it first). your other settings stay as they are, and disconnecting
+                removes only lowtide&apos;s hooks. already-open claude sessions pick it up after a
+                restart.
+              </p>
+            </>
+          )}
         </Card>
         <Card title="about" delay={180}>
           {error && <p className="text-sm text-danger">{error}</p>}

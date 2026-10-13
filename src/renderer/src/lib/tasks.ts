@@ -54,4 +54,4 @@ export const statusLabels: Record<TaskStatus, string> = {
 }
 
 /** Drag-and-drop payload type, so drops from elsewhere are ignored. */
-export const TASK_DRAG_TYPE = 'application/x-codehub-task'
+export const TASK_DRAG_TYPE = 'application/x-lowtide-task'

@@ -11,7 +11,8 @@ const units: [limit: number, ms: number, name: string][] = [
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 
 export function timeAgo(ms: number, now = Date.now()): string {
-  const diff = ms - now
+  // Never in the future: the caller's clock may lag a few seconds behind the event.
+  const diff = Math.min(0, ms - now)
   const [, unitMs, name] = units.find(([limit]) => Math.abs(diff) < limit)!
   return rtf.format(Math.round(diff / unitMs), name as Intl.RelativeTimeFormatUnit)
 }
