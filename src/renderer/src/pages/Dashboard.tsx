@@ -1,13 +1,13 @@
-import { Coffee, Play } from 'lucide-react'
+import { Waves } from 'lucide-react'
 import { ClaudeNow } from '../components/ClaudeNow'
 import { OpenTasks } from '../components/OpenTasks'
-import { Button, Card, EmptyState, PageHeader } from '../components/ui'
+import { TodayHero } from '../components/TodayHero'
+import { Card, EmptyState, PageHeader } from '../components/ui'
 import { useActiveSession } from '../hooks/useActiveSession'
 import { useNow } from '../hooks/useNow'
 import { useSessionStats } from '../hooks/useSessionData'
 import { greeting } from '../lib/greeting'
 import type { Navigate } from '../lib/navigation'
-import { openStartDialog } from '../lib/sessionDialogs'
 import { formatDuration, sessionDateLabel } from '../lib/sessions'
 
 export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Element {
@@ -23,34 +23,14 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
         title={greeting(now)}
         subtitle={
           !active
-            ? `it's ${time} — grab a drink, settle in`
+            ? `it's ${time} — the water's calm, settle in`
             : active.pausedAt
               ? `it's ${time} — ${active.projectName} is waiting for you`
               : `it's ${time} — you're deep in ${active.projectName}`
         }
-        actions={
-          !active && (
-            <Button onClick={() => openStartDialog()}>
-              <Play size={16} /> start session
-            </Button>
-          )
-        }
       />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card title="today" delay={60}>
-          <p className="font-mono text-3xl font-light">{formatDuration(stats?.todayMs ?? 0)}</p>
-        </Card>
-        <Card title="this week" delay={120}>
-          <p className="font-mono text-3xl font-light">{formatDuration(stats?.weekMs ?? 0)}</p>
-        </Card>
-        <Card title="streak" delay={180}>
-          <p className="font-mono text-3xl font-light">
-            {stats?.streakDays ?? 0}{' '}
-            <span className="text-base text-muted">
-              {stats?.streakDays === 1 ? 'day' : 'days'} {stats && stats.streakDays >= 3 && '🔥'}
-            </span>
-          </p>
-        </Card>
+        <TodayHero navigate={navigate} />
 
         <OpenTasks navigate={navigate} className="lg:col-span-2" delay={240} />
         <ClaudeNow navigate={navigate} className="lg:col-span-1" delay={270} />
@@ -70,7 +50,7 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
                       <span className="font-semibold transition group-hover:text-accent">
                         {p.projectName}
                       </span>
-                      <span className="font-mono text-muted">{formatDuration(p.ms)}</span>
+                      <span className="font-display text-muted">{formatDuration(p.ms)}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2/70">
                       <div
@@ -78,7 +58,7 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
                           width: `${Math.max(2, (p.ms / maxProjectMs) * 100)}%`,
                           animationDelay: `${300 + i * 80}ms`
                         }}
-                        className="h-full origin-left animate-grow rounded-full bg-gradient-to-r from-glow to-accent"
+                        className="h-full origin-left animate-grow rounded-full bg-gradient-to-r from-deep to-accent"
                       />
                     </div>
                   </button>
@@ -89,9 +69,25 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
         </Card>
 
         <Card title="recent sessions" delay={330}>
+          <div className="mb-4 flex gap-6 border-b border-line/40 pb-4">
+            <div>
+              <p className="text-xs text-muted">this week</p>
+              <p className="font-display text-2xl">{formatDuration(stats?.weekMs ?? 0)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">streak</p>
+              <p className="font-display text-2xl">
+                {stats?.streakDays ?? 0}
+                <span className="text-sm text-muted">
+                  {' '}
+                  {stats?.streakDays === 1 ? 'day' : 'days'}
+                </span>
+              </p>
+            </div>
+          </div>
           {!stats || stats.recent.length === 0 ? (
             <div className="flex items-center gap-2 text-sm text-muted">
-              <Coffee size={16} className="text-accent" /> nothing yet.
+              <Waves size={16} className="text-accent" /> nothing yet.
             </div>
           ) : (
             <ul className="flex flex-col gap-2.5">
@@ -99,7 +95,7 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
                 <li key={s.id} className="text-sm">
                   <div className="flex justify-between gap-2">
                     <span className="truncate font-semibold">{s.projectName}</span>
-                    <span className="shrink-0 font-mono text-muted">
+                    <span className="shrink-0 font-display text-muted">
                       {formatDuration(s.durationMs)}
                     </span>
                   </div>

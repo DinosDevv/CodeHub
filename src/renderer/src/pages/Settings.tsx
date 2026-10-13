@@ -5,6 +5,8 @@ import { useHooksStatus } from '../hooks/useClaude'
 import { useIdleMinutes } from '../hooks/useIdleMinutes'
 import { useRoots } from '../hooks/useRoots'
 import { useShellSetting, useTerminalSupport } from '../hooks/useTerminals'
+import { useTideGoal } from '../hooks/useTide'
+import { setTideGoalHours } from '../lib/tide'
 import type { TerminalShell } from '../lib/terminals'
 import { scanProjects } from '../lib/projects'
 import { toast } from '../lib/toast'
@@ -16,6 +18,7 @@ export function Settings(): React.JSX.Element {
   const shell = useShellSetting()
   const hooks = useHooksStatus()
   const support = useTerminalSupport()
+  const tideGoal = useTideGoal()
   const shells: { id: TerminalShell; label: string; available: boolean }[] = [
     { id: 'powershell', label: 'powershell', available: true },
     { id: 'gitbash', label: 'git bash', available: support?.gitBash ?? false }
@@ -54,6 +57,22 @@ export function Settings(): React.JSX.Element {
           </label>
           <p className="mt-2 text-xs text-muted">
             it picks back up on its own when you return. the idle minutes don&apos;t count.
+          </p>
+          <label className="mt-5 flex items-center gap-3 text-sm text-muted">
+            high tide at
+            <input
+              type="number"
+              min={0.5}
+              max={16}
+              step={0.5}
+              defaultValue={tideGoal}
+              onBlur={(e) => setTideGoalHours(Number(e.target.value) || tideGoal)}
+              className="w-16 rounded-full border border-line/70 bg-surface/50 px-3 py-1 text-center font-mono text-fg outline-none focus:border-glow/50"
+            />
+            hours of focus a day
+          </label>
+          <p className="mt-2 text-xs text-muted">
+            the water along the bottom of the window rises as you work toward it.
           </p>
         </Card>
         <Card title="terminal" delay={150}>

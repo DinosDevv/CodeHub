@@ -63,11 +63,11 @@ export function Sidebar({
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-line/50 bg-surface/40 p-4 backdrop-blur-xl">
       <div className="mb-8 flex items-center gap-3 px-2 pt-2">
-        <div className="grid h-10 w-10 animate-breathe place-items-center rounded-2xl bg-gradient-to-br from-glow to-accent text-accent-fg shadow-[0_0_24px_-4px_var(--color-glow)]">
+        <div className="grid h-10 w-10 animate-breathe place-items-center rounded-2xl bg-gradient-to-br from-accent to-deep text-accent-fg shadow-[0_0_24px_-4px_var(--color-accent)]">
           <Waves size={20} strokeWidth={2.4} />
         </div>
         <div>
-          <div className="text-lg leading-tight font-bold">lowtide</div>
+          <div className="font-display text-xl leading-tight font-semibold">lowtide</div>
           <div className="text-xs text-muted">code with the tide</div>
         </div>
       </div>

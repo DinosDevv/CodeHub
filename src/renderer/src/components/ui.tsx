@@ -37,7 +37,7 @@ export function PageHeader({
   return (
     <header className="mb-8 flex animate-rise items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 className="font-display text-4xl font-semibold tracking-tight">{title}</h1>
         {subtitle && (
           <p className="mt-1 truncate text-sm text-muted" title={subtitle}>
             {subtitle}

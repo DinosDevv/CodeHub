@@ -64,7 +64,7 @@ export function SessionBar({ navigate }: { navigate: Navigate }): React.JSX.Elem
         </p>
       )}
       <p
-        className={`mt-1 font-mono text-2xl font-light tabular-nums ${paused ? 'text-muted' : ''}`}
+        className={`mt-1 font-display text-3xl font-light tabular-nums ${paused ? 'text-muted' : ''}`}
       >
         {formatClock(activeElapsedMs(active, now.getTime()))}
       </p>

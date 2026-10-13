@@ -1,29 +1,32 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/nunito';
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/fraunces/full.css';
 
 /*
- * Design tokens — cozy, ambient, dark, lofi.
+ * Design tokens — "Tidepool": cozy, ambient, dark, lofi, by the sea at night.
  * Every color/font/motion in the UI comes from here, so restyling the app
  * means editing this block. Components only use the semantic names
  * (bg-surface, text-muted, border-line, bg-accent, text-glow, animate-rise, ...).
  */
 @theme {
-  /* late-night room: deep plum walls, warm lamp light, lavender neon */
-  --color-bg: #120f1c;
-  --color-surface: #1c1729;
-  --color-surface-2: #261f37;
-  --color-line: #332a49;
-  --color-fg: #f1e9e1;
-  --color-muted: #9d91b5;
-  --color-accent: #f4a46a; /* warm lamp amber */
-  --color-accent-fg: #22160f;
-  --color-glow: #b9a4ff; /* soft lavender neon */
-  --color-success: #8fd6a8;
-  --color-warning: #f2c46d;
-  --color-danger: #f28b8b;
+  /* night ocean: deep navy water, sea-glass teal, moonlight gold */
+  --color-bg: #08121c;
+  --color-surface: #0f1d2a;
+  --color-surface-2: #16283a;
+  --color-line: #213a50;
+  --color-fg: #e6eef2;
+  --color-muted: #87a2b6;
+  --color-accent: #63d2c0; /* sea glass */
+  --color-accent-fg: #05211d;
+  --color-glow: #f2d49b; /* moonlight */
+  --color-success: #a6e3a1;
+  --color-warning: #f5a26b; /* buoy orange */
+  --color-danger: #f2828b;
+  --color-deep: #1b4a6b; /* the water itself, for waves */
 
   --font-sans: 'Nunito Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', 'Cascadia Code', Consolas, monospace;
 
   --radius-card: 1.25rem;
@@ -35,6 +38,11 @@
   --animate-float: float 14s ease-in-out infinite;
   --animate-breathe: breathe 6s ease-in-out infinite;
   --animate-grow: grow 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-wave-a: wave 22s linear infinite;
+  --animate-wave-b: wave 34s linear infinite reverse;
+  --animate-wave-c: wave 48s linear infinite;
+  --animate-bob: bob 7s ease-in-out infinite;
+  --animate-twinkle: twinkle 5s ease-in-out infinite;
 
   @keyframes rise {
     from {
@@ -82,6 +90,32 @@
     }
     50% {
       transform: translateY(-40px);
+    }
+  }
+  @keyframes wave {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(6px);
+    }
+  }
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.15;
+    }
+    50% {
+      opacity: var(--speck-opacity, 0.7);
     }
   }
   @keyframes grow {
@@ -157,4 +191,11 @@ body {
 .xterm .xterm-screen,
 .xterm .xterm-scrollable-element {
   background-color: transparent !important;
+}
+
+/* Display type: soft, slightly wonky Fraunces for titles and big numbers. */
+.font-display {
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1;
 }

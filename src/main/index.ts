@@ -17,7 +17,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#120f1c',
+    backgroundColor: '#08121c',
     title: 'Lowtide',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
