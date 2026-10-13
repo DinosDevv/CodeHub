@@ -39,7 +39,8 @@ export const setIdleMinutes = (minutes: number): Promise<number> =>
 export const pauseLabels: Record<PauseReason, string> = {
   manual: 'taking a breather',
   idle: 'paused — you stepped away',
-  closed: 'paused while lowtide was closed'
+  closed: 'paused while lowtide was closed',
+  break: 'on a break ☕'
 }
 
 /** 3_900_000 → "1h 05m" */

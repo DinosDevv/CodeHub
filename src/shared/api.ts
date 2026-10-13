@@ -80,7 +80,32 @@ export interface Commit {
   date: number
 }
 
-export type PauseReason = 'manual' | 'idle' | 'closed'
+export type PauseReason = 'manual' | 'idle' | 'closed' | 'break'
+
+export interface FocusSettings {
+  enabled: boolean
+  focusMinutes: number
+  breakMinutes: number
+}
+
+/**
+ * off: no session (or rhythm turned off) · focus: in a focus block ·
+ * due: the block is done, a break is suggested · break: on a break
+ */
+export type FocusPhase = 'off' | 'focus' | 'due' | 'break'
+
+export interface FocusStatus {
+  phase: FocusPhase
+  /** False while the session is paused, so the block isn't advancing. */
+  running: boolean
+  /** Focused time in the current block, as of `at`. */
+  blockMs: number
+  /** Block length, including any "5 more minutes". */
+  goalMs: number
+  breakEndsAt: number | null
+  /** When this snapshot was taken (main-process clock). */
+  at: number
+}
 
 export interface ActiveSession {
   id: number
@@ -287,6 +312,16 @@ export interface Api {
     setShell(shell: TerminalShell): Promise<void>
     onData(listener: (id: number, data: string) => void): () => void
     onExit(listener: (id: number, exitCode: number) => void): () => void
+    onChanged(listener: () => void): () => void
+  }
+  focus: {
+    status(): Promise<FocusStatus>
+    settings(): Promise<FocusSettings>
+    setSettings(settings: FocusSettings): Promise<FocusSettings>
+    takeBreak(): Promise<void>
+    /** Five more minutes before the break nudge comes back. */
+    snooze(): Promise<void>
+    endBreak(): Promise<void>
     onChanged(listener: () => void): () => void
   }
   claude: {

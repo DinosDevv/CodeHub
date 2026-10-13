@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { closeDb, getDb } from './db'
 import { registerIpc } from './ipc'
 import { pauseForQuit, startIdleWatch } from './services/idle'
+import { startFocusWatch } from './services/focus'
 import { closeAllTerminals } from './services/terminals'
 import { refreshHookScript } from './services/claudeHooks'
 import { startHookServer, stopHookServer } from './services/hookServer'
@@ -68,6 +69,7 @@ if (!app.requestSingleInstanceLock()) {
     getDb()
     registerIpc()
     startIdleWatch()
+    startFocusWatch()
     startHookServer()
     refreshHookScript()
     createWindow()

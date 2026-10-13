@@ -59,6 +59,15 @@ const api: Api = {
     },
     onChanged: (listener) => subscribe('terminals:changed', listener)
   },
+  focus: {
+    status: () => ipcRenderer.invoke('focus:status'),
+    settings: () => ipcRenderer.invoke('focus:settings'),
+    setSettings: (settings) => ipcRenderer.invoke('focus:setSettings', settings),
+    takeBreak: () => ipcRenderer.invoke('focus:takeBreak'),
+    snooze: () => ipcRenderer.invoke('focus:snooze'),
+    endBreak: () => ipcRenderer.invoke('focus:endBreak'),
+    onChanged: (listener) => subscribe('focus:changed', listener)
+  },
   claude: {
     live: () => ipcRenderer.invoke('claude:live'),
     hooks: () => ipcRenderer.invoke('claude:hooks'),

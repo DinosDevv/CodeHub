@@ -23,6 +23,21 @@ const SELECT_SESSION = `
   SELECT s.*, p.name AS project_name
   FROM sessions s JOIN projects p ON p.id = s.project_id`
 
+export interface PauseSpan {
+  started_at: number
+  ended_at: number | null
+  reason: PauseReason
+}
+
+/** Every pause of a session, oldest first. */
+export function listPauses(sessionId: number): PauseSpan[] {
+  return getDb()
+    .prepare(
+      'SELECT started_at, ended_at, reason FROM session_pauses WHERE session_id = ? ORDER BY started_at'
+    )
+    .all(sessionId) as PauseSpan[]
+}
+
 function openPause(sessionId: number): PauseRow | undefined {
   return getDb()
     .prepare(

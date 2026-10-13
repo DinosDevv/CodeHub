@@ -17,6 +17,7 @@ import {
   resumeSession
 } from '../lib/sessions'
 import { timeAgo } from '../lib/time'
+import { FocusStrip } from './FocusStrip'
 import { Button } from './ui'
 
 /** The big card on the home page: what you're doing now, or where you left off. */
@@ -69,7 +70,7 @@ export function TodayHero({ navigate }: { navigate: Navigate }): React.JSX.Eleme
               {formatClock(activeElapsedMs(active, now.getTime()))}
             </p>
             <div className="flex gap-2">
-              {active.pausedAt ? (
+              {active.pauseReason === 'break' ? null : active.pausedAt ? (
                 <Button onClick={() => resumeSession()}>
                   <Play size={16} /> resume
                 </Button>
@@ -133,6 +134,7 @@ export function TodayHero({ navigate }: { navigate: Navigate }): React.JSX.Eleme
         </div>
       )}
 
+      {active && <FocusStrip />}
       <TideMeter />
     </section>
   )

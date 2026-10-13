@@ -23,6 +23,14 @@ import { broadcast } from './events'
 import { hooksStatus, installHooks, removeHooks } from './services/claudeHooks'
 import { listLive } from './services/claudeLive'
 import { getRecipe, setRecipe } from './services/recipes'
+import {
+  endBreak,
+  focusStatus,
+  getFocusSettings,
+  setFocusSettings,
+  snoozeBreak,
+  takeBreak
+} from './services/focus'
 import { isClaudeAvailable, writeCommitMessage } from './services/claudeCli'
 import { claudeHistory } from './db/claudeEvents'
 import {
@@ -38,6 +46,7 @@ import {
 } from './services/terminals'
 import type {
   AppInfo,
+  FocusSettings,
   NewTerminal,
   ScanResult,
   SessionRecipe,
@@ -154,6 +163,14 @@ export function registerIpc(): void {
   ipcMain.handle('terminals:setShell', (_, shell: TerminalShell) =>
     setSetting(SHELL_KEY, shell === 'gitbash' ? 'gitbash' : 'powershell')
   )
+
+  // focus rhythm
+  ipcMain.handle('focus:status', () => focusStatus())
+  ipcMain.handle('focus:settings', () => getFocusSettings())
+  ipcMain.handle('focus:setSettings', (_, settings: FocusSettings) => setFocusSettings(settings))
+  ipcMain.handle('focus:takeBreak', () => takeBreak())
+  ipcMain.handle('focus:snooze', () => snoozeBreak())
+  ipcMain.handle('focus:endBreak', () => endBreak())
 
   // claude
   ipcMain.handle('claude:live', () => listLive())

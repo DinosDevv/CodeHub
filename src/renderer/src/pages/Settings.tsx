@@ -1,7 +1,8 @@
 import { RootFolders } from '../components/RootFolders'
-import { Button, Card, Chip, PageHeader } from '../components/ui'
+import { Button, Card, Chip, PageHeader, Toggle } from '../components/ui'
 import { useAppInfo } from '../hooks/useAppInfo'
 import { useHooksStatus } from '../hooks/useClaude'
+import { useFocusSettings } from '../hooks/useFocus'
 import { useIdleMinutes } from '../hooks/useIdleMinutes'
 import { useRoots } from '../hooks/useRoots'
 import { useShellSetting, useTerminalSupport } from '../hooks/useTerminals'
@@ -19,6 +20,7 @@ export function Settings(): React.JSX.Element {
   const hooks = useHooksStatus()
   const support = useTerminalSupport()
   const tideGoal = useTideGoal()
+  const focus = useFocusSettings()
   const shells: { id: TerminalShell; label: string; available: boolean }[] = [
     { id: 'powershell', label: 'powershell', available: true },
     { id: 'gitbash', label: 'git bash', available: support?.gitBash ?? false }
@@ -74,6 +76,48 @@ export function Settings(): React.JSX.Element {
           <p className="mt-2 text-xs text-muted">
             the water along the bottom of the window rises as you work toward it.
           </p>
+        </Card>
+        <Card title="focus rhythm" delay={135}>
+          {focus.settings && (
+            <>
+              <Toggle
+                checked={focus.settings.enabled}
+                onChange={(enabled) => focus.save({ enabled })}
+              >
+                suggest breaks during a session
+              </Toggle>
+              <div
+                className={`mt-4 flex flex-wrap items-center gap-3 text-sm text-muted ${
+                  focus.settings.enabled ? '' : 'pointer-events-none opacity-40'
+                }`}
+              >
+                focus for
+                <input
+                  type="number"
+                  min={10}
+                  max={180}
+                  step={5}
+                  defaultValue={focus.settings.focusMinutes}
+                  onBlur={(e) => focus.save({ focusMinutes: Number(e.target.value) })}
+                  className="w-16 rounded-full border border-line/70 bg-surface/50 px-3 py-1 text-center font-mono text-fg outline-none focus:border-glow/50"
+                />
+                minutes, then a
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  defaultValue={focus.settings.breakMinutes}
+                  onBlur={(e) => focus.save({ breakMinutes: Number(e.target.value) })}
+                  className="w-16 rounded-full border border-line/70 bg-surface/50 px-3 py-1 text-center font-mono text-fg outline-none focus:border-glow/50"
+                />
+                minute break
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                only focused time counts. stepping away for a break&apos;s length (or longer) starts
+                a fresh block on its own.
+              </p>
+            </>
+          )}
         </Card>
         <Card title="terminal" delay={150}>
           <p className="mb-3 text-sm text-muted">new terminal tabs open with</p>

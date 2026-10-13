@@ -11,6 +11,7 @@ import {
   pauseSession,
   resumeSession
 } from '../lib/sessions'
+import { FocusStrip } from './FocusStrip'
 import { IconButton } from './ui'
 
 /** Lives in the sidebar: the session clock and its controls. */
@@ -68,9 +69,10 @@ export function SessionBar({ navigate }: { navigate: Navigate }): React.JSX.Elem
       >
         {formatClock(activeElapsedMs(active, now.getTime()))}
       </p>
-      {paused && active.pauseReason && (
+      {paused && active.pauseReason && active.pauseReason !== 'break' && (
         <p className="mt-0.5 text-xs text-muted italic">{pauseLabels[active.pauseReason]}</p>
       )}
+      <FocusStrip compact />
       <div className="mt-3 flex gap-2">
         {paused ? (
           <IconButton label="resume" onClick={() => resumeSession()}>

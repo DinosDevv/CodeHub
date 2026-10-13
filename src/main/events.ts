@@ -1,7 +1,7 @@
 import { BrowserWindow } from 'electron'
 
 export type ChangeChannel =
-  'sessions:changed' | 'tasks:changed' | 'terminals:changed' | 'claude:changed'
+  'sessions:changed' | 'tasks:changed' | 'terminals:changed' | 'claude:changed' | 'focus:changed'
 
 /** Sends a message with arguments to every open window. */
 export function sendToWindows(channel: string, ...args: unknown[]): void {
