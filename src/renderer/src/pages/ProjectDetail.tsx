@@ -85,7 +85,7 @@ export function ProjectDetail({
 
       {/* calm header: who this project is, at a glance */}
       <header className="mb-6 flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1 basis-80">
           <h1 className="font-display text-4xl font-semibold tracking-tight">{project.name}</h1>
           <p className="mt-1 truncate text-sm text-muted" title={project.path}>
             {prettyPath(project.path)}

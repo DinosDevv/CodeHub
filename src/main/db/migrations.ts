@@ -57,5 +57,8 @@ export const migrations: string[] = [
   ALTER TABLE tasks ADD COLUMN notes TEXT;
   ALTER TABLE tasks ADD COLUMN position REAL NOT NULL DEFAULT 0;
   CREATE INDEX idx_tasks_session ON tasks(session_id);
+  `,
+  `
+  ALTER TABLE projects ADD COLUMN recipe TEXT;
   `
 ]

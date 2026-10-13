@@ -183,3 +183,42 @@ export function SearchInput({
     />
   )
 }
+
+/** A small on/off switch with a label. */
+export function Toggle({
+  checked,
+  onChange,
+  disabled = false,
+  children
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean
+  children: ReactNode
+}): React.JSX.Element {
+  return (
+    <label
+      className={`flex items-center gap-3 text-sm ${
+        disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+      }`}
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative h-5 w-9 shrink-0 rounded-full transition duration-300 ${
+          checked ? 'bg-accent/80 shadow-[0_0_12px_-2px_var(--color-accent)]' : 'bg-surface-2'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-fg transition duration-300 ${
+            checked ? 'translate-x-4' : ''
+          }`}
+        />
+      </button>
+      <span className="flex flex-wrap items-center gap-2">{children}</span>
+    </label>
+  )
+}

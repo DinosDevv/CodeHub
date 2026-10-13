@@ -179,6 +179,21 @@ export interface TerminalInfo {
   /** Null while the process is still running. */
   exitCode: number | null
   createdAt: number
+  /** Local addresses the process printed (e.g. a dev server), oldest first. */
+  urls: string[]
+}
+
+export type RecipeClaude = 'off' | 'fresh' | 'task'
+
+/** What "start session" sets up for a project. */
+export interface SessionRecipe {
+  vscode: boolean
+  /** npm script to run, e.g. "dev"; null for none. */
+  script: string | null
+  /** off · a fresh Claude tab · Claude working on your next task */
+  claude: RecipeClaude
+  /** Open the first local address the script prints in your browser. */
+  browser: boolean
 }
 
 export interface TerminalSupport {
@@ -289,6 +304,8 @@ export interface Api {
     get(id: number): Promise<Project | null>
     scan(): Promise<ScanResult>
     setArchived(id: number, archived: boolean): Promise<void>
+    getRecipe(id: number): Promise<SessionRecipe>
+    setRecipe(id: number, recipe: SessionRecipe): Promise<SessionRecipe>
   }
   git: {
     status(path: string): Promise<RepoStatus>

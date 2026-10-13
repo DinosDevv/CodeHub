@@ -22,6 +22,7 @@ import { addTask, deleteTask, listTasks, moveTask, updateTask } from './db/tasks
 import { broadcast } from './events'
 import { hooksStatus, installHooks, removeHooks } from './services/claudeHooks'
 import { listLive } from './services/claudeLive'
+import { getRecipe, setRecipe } from './services/recipes'
 import { isClaudeAvailable, writeCommitMessage } from './services/claudeCli'
 import { claudeHistory } from './db/claudeEvents'
 import {
@@ -39,6 +40,7 @@ import type {
   AppInfo,
   NewTerminal,
   ScanResult,
+  SessionRecipe,
   TaskQuery,
   TaskStatus,
   TerminalShell
@@ -165,6 +167,10 @@ export function registerIpc(): void {
   // projects
   ipcMain.handle('projects:list', () => listProjects())
   ipcMain.handle('projects:get', (_, id: number) => getProject(id))
+  ipcMain.handle('projects:getRecipe', (_, id: number) => getRecipe(id))
+  ipcMain.handle('projects:setRecipe', (_, id: number, recipe: SessionRecipe) =>
+    setRecipe(id, recipe)
+  )
   ipcMain.handle('projects:setArchived', (_, id: number, archived: boolean) =>
     setProjectArchived(id, archived)
   )

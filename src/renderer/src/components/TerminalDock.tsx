@@ -3,6 +3,7 @@ import { useClaudeLive } from '../hooks/useClaude'
 import { useBusyTerminals, useDock, useTerminals } from '../hooks/useTerminals'
 import { claudeStates, type ClaudeLive } from '../lib/claude'
 import { closeDock, setActiveTerminal, setDockHeight } from '../lib/dock'
+import { openLocalUrl } from '../lib/recipes'
 import { closeTerminal, type TerminalInfo } from '../lib/terminals'
 import { NewTerminalMenu } from './NewTerminalMenu'
 import { TerminalView } from './TerminalView'
@@ -128,6 +129,18 @@ function Tab({
       {claudeState && (
         <span className={`shrink-0 font-semibold ${claudeState.text}`}>{claudeState.label}</span>
       )}
+      {terminal.urls[0] && !exited && (
+        <button
+          title={`open ${terminal.urls[0]}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            openLocalUrl(terminal.urls[0])
+          }}
+          className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[11px] text-accent transition hover:bg-accent/25"
+        >
+          ↗ {portOf(terminal.urls[0])}
+        </button>
+      )}
       <button
         aria-label="close terminal"
         onClick={(e) => {
@@ -140,4 +153,10 @@ function Tab({
       </button>
     </div>
   )
+}
+
+/** "http://localhost:5173/" → ":5173" */
+function portOf(url: string): string {
+  const match = /:(\d+)/.exec(url.replace(/^https?:\/\//, ''))
+  return match ? `:${match[1]}` : url
 }

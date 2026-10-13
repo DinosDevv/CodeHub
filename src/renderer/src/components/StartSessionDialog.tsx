@@ -1,15 +1,14 @@
 import { Play } from 'lucide-react'
 import { useState } from 'react'
 import { useProjects } from '../hooks/useProjects'
-import { readPref, writePref } from '../lib/preferences'
-import { filterProjects, openInVSCode, prettyPath } from '../lib/projects'
+import { filterProjects, prettyPath } from '../lib/projects'
+import { getRecipe, runRecipe } from '../lib/recipes'
 import { closeSessionDialog } from '../lib/sessionDialogs'
 import { startSession } from '../lib/sessions'
 import { toast } from '../lib/toast'
 import { Modal } from './Modal'
+import { RecipeEditor } from './RecipeEditor'
 import { Button, EmptyState, SearchInput } from './ui'
-
-const OPEN_VSCODE_PREF = 'startSession.openVSCode'
 
 export function StartSessionDialog({
   initialProjectId
@@ -19,7 +18,6 @@ export function StartSessionDialog({
   const { projects, loading } = useProjects()
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<number | null>(initialProjectId)
-  const [openVSCode, setOpenVSCode] = useState(() => readPref(OPEN_VSCODE_PREF, true))
   const [starting, setStarting] = useState(false)
 
   const choices = filterProjects(projects, query, false).filter((p) => p.exists)
@@ -28,19 +26,19 @@ export function StartSessionDialog({
   const start = async (): Promise<void> => {
     if (!selected) return
     setStarting(true)
-    writePref(OPEN_VSCODE_PREF, openVSCode)
     const session = await startSession(selected.id)
     setStarting(false)
     if (!session) return
     closeSessionDialog()
     toast(`session started on ${selected.name} — have a good one ☕`, 'success')
-    if (openVSCode) await openInVSCode(selected)
+    // Read the saved recipe so a double-click start uses it too.
+    await runRecipe(selected, await getRecipe(selected.id))
   }
 
   return (
-    <Modal title="what are we working on?" onClose={closeSessionDialog}>
+    <Modal title="what are we working on?" onClose={closeSessionDialog} width="max-w-xl">
       <SearchInput value={query} onChange={setQuery} placeholder="find a project…" />
-      <ul className="mt-4 flex max-h-72 flex-col gap-1 overflow-auto pr-1">
+      <ul className="mt-4 flex max-h-56 flex-col gap-1 overflow-auto pr-1">
         {loading ? (
           <EmptyState>gathering your projects…</EmptyState>
         ) : choices.length === 0 ? (
@@ -67,24 +65,20 @@ export function StartSessionDialog({
           ))
         )}
       </ul>
-      <div className="mt-5 flex items-center justify-between gap-4">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted">
-          <input
-            type="checkbox"
-            checked={openVSCode}
-            onChange={(e) => setOpenVSCode(e.target.checked)}
-            className="accent-(--color-accent)"
-          />
-          open in vs code too
-        </label>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={closeSessionDialog}>
-            not yet
-          </Button>
-          <Button onClick={start} disabled={!selected || starting}>
-            <Play size={16} /> start
-          </Button>
+
+      {selected && (
+        <div className="mt-4">
+          <RecipeEditor key={selected.id} projectId={selected.id} projectName={selected.name} />
         </div>
+      )}
+
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={closeSessionDialog}>
+          not yet
+        </Button>
+        <Button onClick={start} disabled={!selected || starting}>
+          <Play size={16} /> start
+        </Button>
       </div>
     </Modal>
   )

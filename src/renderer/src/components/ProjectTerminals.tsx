@@ -1,6 +1,7 @@
-import { Play, Sparkles, SquareTerminal } from 'lucide-react'
-import { useProjectScripts, useTerminalSupport } from '../hooks/useTerminals'
-import { showClaudeHint } from '../lib/dock'
+import { ExternalLink, Play, Sparkles, SquareTerminal } from 'lucide-react'
+import { useProjectScripts, useTerminalSupport, useTerminals } from '../hooks/useTerminals'
+import { openDock, setActiveTerminal, showClaudeHint } from '../lib/dock'
+import { openLocalUrl } from '../lib/recipes'
 import { openTerminal } from '../lib/terminals'
 import { Button, Card } from './ui'
 
@@ -14,6 +15,9 @@ export function ProjectTerminals({
 }): React.JSX.Element {
   const scripts = useProjectScripts(projectId)
   const support = useTerminalSupport()
+  const servers = useTerminals().filter(
+    (t) => t.projectId === projectId && t.exitCode === null && t.urls.length > 0
+  )
 
   const openClaude = (): void => {
     if (support && !support.claude) showClaudeHint(true)
@@ -22,6 +26,31 @@ export function ProjectTerminals({
 
   return (
     <Card title="terminal" delay={delay}>
+      {servers.length > 0 && (
+        <ul className="mb-4 flex flex-col gap-1.5">
+          {servers.map((t) => (
+            <li key={t.id} className="flex items-center gap-2 text-sm">
+              <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-success shadow-[0_0_8px_var(--color-success)]" />
+              <button
+                onClick={() => {
+                  setActiveTerminal(t.id)
+                  openDock()
+                }}
+                className="truncate text-muted transition hover:text-fg"
+              >
+                {t.title.replace(/^npm run /, '')}
+              </button>
+              <button
+                onClick={() => openLocalUrl(t.urls[0])}
+                className="ml-auto flex shrink-0 items-center gap-1 font-mono text-xs text-accent transition hover:brightness-125"
+              >
+                {t.urls[0].replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                <ExternalLink size={12} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={() => openTerminal({ projectId, kind: 'shell' })}>
           <SquareTerminal size={16} /> shell

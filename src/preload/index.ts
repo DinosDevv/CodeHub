@@ -76,7 +76,9 @@ const api: Api = {
     list: () => ipcRenderer.invoke('projects:list'),
     get: (id) => ipcRenderer.invoke('projects:get', id),
     scan: () => ipcRenderer.invoke('projects:scan'),
-    setArchived: (id, archived) => ipcRenderer.invoke('projects:setArchived', id, archived)
+    setArchived: (id, archived) => ipcRenderer.invoke('projects:setArchived', id, archived),
+    getRecipe: (id) => ipcRenderer.invoke('projects:getRecipe', id),
+    setRecipe: (id, recipe) => ipcRenderer.invoke('projects:setRecipe', id, recipe)
   },
   git: {
     status: (path) => ipcRenderer.invoke('git:status', path),

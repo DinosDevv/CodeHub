@@ -22,6 +22,30 @@ interface Terminal {
   proc: pty.IPty
   buffer: string
   pending: string
+  /** Tail of recent output, so an address split across two chunks is still found. */
+  scan: string
+}
+
+// Local addresses a dev server prints, e.g. "Local: http://localhost:5173/".
+const LOCAL_URL =
+  /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):\d{2,5}(?:\/[^\s'"`)\]]*)?/g
+// eslint-disable-next-line no-control-regex
+const ANSI = /\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07/g
+const MAX_URLS = 5
+
+/** Collects new local addresses from output; returns true if any were added. */
+function detectUrls(term: Terminal, data: string): boolean {
+  term.scan = (term.scan + data.replace(ANSI, '')).slice(-2000)
+  let added = false
+  for (const match of term.scan.matchAll(LOCAL_URL)) {
+    // 0.0.0.0 means "all interfaces"; browsers want localhost.
+    const url = match[0].replace('0.0.0.0', 'localhost').replace(/[.,;]+$/, '')
+    if (!term.info.urls.includes(url) && term.info.urls.length < MAX_URLS) {
+      term.info.urls.push(url)
+      added = true
+    }
+  }
+  return added
 }
 
 const terminals = new Map<number, Terminal>()
@@ -162,15 +186,17 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
     kind: opts.kind,
     title,
     exitCode: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    urls: []
   }
-  const term: Terminal = { info, proc, buffer: '', pending: '' }
+  const term: Terminal = { info, proc, buffer: '', pending: '', scan: '' }
   terminals.set(info.id, term)
 
   proc.onData((data) => {
     term.buffer = (term.buffer + data).slice(-MAX_BUFFER)
     term.pending += data
     flushTimer ??= setTimeout(flush, FLUSH_MS)
+    if (detectUrls(term, data)) broadcast('terminals:changed')
   })
   proc.onExit(({ exitCode }) => {
     forgetTerminal(id)
