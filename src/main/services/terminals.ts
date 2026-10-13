@@ -1,10 +1,12 @@
 import { execFileSync } from 'child_process'
 import { existsSync, readFileSync } from 'fs'
+import { homedir } from 'os'
 import { dirname, join } from 'path'
 import * as pty from 'node-pty'
 import { getProject } from '../db/projects'
 import { getSetting } from '../db/settings'
 import { broadcast, sendToWindows } from '../events'
+import { envWithCurrentPath } from './envPath'
 import type { NewTerminal, TerminalInfo, TerminalShell } from '../../shared/api'
 
 export const SHELL_KEY = 'terminalShell'
@@ -34,12 +36,13 @@ function flush(): void {
   }
 }
 
-/** Every match for `command` on PATH, in PATH order. */
+/** Every match for `command` on the current PATH, in PATH order. */
 function whichAll(command: string): string[] {
   try {
     const out = execFileSync(process.platform === 'win32' ? 'where.exe' : 'which', [command], {
       encoding: 'utf8',
-      windowsHide: true
+      windowsHide: true,
+      env: envWithCurrentPath()
     })
     return out.split(/\r?\n/).filter(Boolean)
   } catch {
@@ -51,13 +54,27 @@ function which(command: string): string | null {
   return whichAll(command)[0] ?? null
 }
 
-let claudeCache: { at: number; available: boolean } | null = null
+/** Where Claude Code's native installer puts it, in case PATH doesn't list it. */
+const CLAUDE_DEFAULT = join(
+  homedir(),
+  '.local',
+  'bin',
+  process.platform === 'win32' ? 'claude.exe' : 'claude'
+)
+
+let claudeCache: { at: number; command: string | null } | null = null
+
+/** How to launch Claude Code: `claude` if it's on PATH, else its full path, else null. */
+function claudeCommand(): string | null {
+  if (!claudeCache || Date.now() - claudeCache.at > 30_000) {
+    const command = which('claude') ? 'claude' : existsSync(CLAUDE_DEFAULT) ? CLAUDE_DEFAULT : null
+    claudeCache = { at: Date.now(), command }
+  }
+  return claudeCache.command
+}
 
 export function isClaudeAvailable(): boolean {
-  if (!claudeCache || Date.now() - claudeCache.at > 30_000) {
-    claudeCache = { at: Date.now(), available: which('claude') !== null }
-  }
-  return claudeCache.available
+  return claudeCommand() !== null
 }
 
 let gitBashCache: string | null | undefined
@@ -117,8 +134,8 @@ function shellCommand(shell: TerminalShell, run: string | null): { file: string;
 /** A clean environment: never leak Electron's own variables into user processes. */
 function childEnv(): Record<string, string> {
   const env: Record<string, string> = {}
-  for (const [k, v] of Object.entries(process.env)) {
-    if (v !== undefined && !k.startsWith('ELECTRON_') && k !== 'CODEHUB_DATA_DIR') env[k] = v
+  for (const [k, v] of Object.entries(envWithCurrentPath())) {
+    if (!k.startsWith('ELECTRON_') && k !== 'CODEHUB_DATA_DIR') env[k] = v
   }
   env.COLORTERM = 'truecolor'
   return env
@@ -132,8 +149,10 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
   let run: string | null = null
   let title: string
   if (opts.kind === 'claude') {
-    if (!isClaudeAvailable()) throw new Error('Claude Code isn’t installed yet.')
-    run = 'claude'
+    const claude = claudeCommand()
+    if (!claude) throw new Error('Claude Code isn’t installed yet.')
+    // A full path (when PATH doesn't list it) has to be quoted and called explicitly.
+    run = claude === 'claude' ? 'claude' : shell === 'gitbash' ? `'${claude}'` : `& '${claude}'`
     title = '✦ claude'
   } else if (opts.kind === 'script') {
     if (
