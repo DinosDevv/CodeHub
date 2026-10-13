@@ -67,7 +67,20 @@ const api: Api = {
   },
   git: {
     status: (path) => ipcRenderer.invoke('git:status', path),
-    log: (path, limit) => ipcRenderer.invoke('git:log', path, limit)
+    log: (path, limit) => ipcRenderer.invoke('git:log', path, limit),
+    workingTree: (path) => ipcRenderer.invoke('git:workingTree', path),
+    diff: (path, file, staged) => ipcRenderer.invoke('git:diff', path, file, staged),
+    stage: (path, files) => ipcRenderer.invoke('git:stage', path, files),
+    unstage: (path, files) => ipcRenderer.invoke('git:unstage', path, files),
+    commit: (path, message) => ipcRenderer.invoke('git:commit', path, message),
+    push: (path) => ipcRenderer.invoke('git:push', path),
+    pull: (path) => ipcRenderer.invoke('git:pull', path),
+    fetch: (path) => ipcRenderer.invoke('git:fetch', path),
+    onChanged: (listener) => {
+      const handler = (_: unknown, path: string): void => listener(path)
+      ipcRenderer.on('git:changed', handler)
+      return () => ipcRenderer.removeListener('git:changed', handler)
+    }
   },
   launch: {
     vscode: (path) => ipcRenderer.invoke('launch:vscode', path),

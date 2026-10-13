@@ -1,4 +1,5 @@
 import { ArrowLeft, Code, Eye, EyeOff, FolderOpen, GitCommitHorizontal } from 'lucide-react'
+import { ChangesPanel } from '../components/ChangesPanel'
 import { ProjectSessions } from '../components/ProjectSessions'
 import { ProjectTerminals } from '../components/ProjectTerminals'
 import { RepoBadges } from '../components/RepoBadges'
@@ -98,6 +99,7 @@ export function ProjectDetail({
           <Card title="tasks" delay={120}>
             <TaskList projectId={project.id} />
           </Card>
+          {project.exists && <ChangesPanel path={project.path} delay={150} />}
           <Card title="recent commits" delay={180}>
             {commits === null ? (
               <EmptyState>reading history…</EmptyState>

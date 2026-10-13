@@ -36,11 +36,15 @@ export function PageHeader({
 }): React.JSX.Element {
   return (
     <header className="mb-8 flex animate-rise items-end justify-between gap-4">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+        {subtitle && (
+          <p className="mt-1 truncate text-sm text-muted" title={subtitle}>
+            {subtitle}
+          </p>
+        )}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
     </header>
   )
 }
@@ -60,7 +64,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }): React.JSX.Element {
   return (
     <button
-      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition duration-300 disabled:pointer-events-none disabled:opacity-40 ${buttonVariants[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition duration-300 disabled:pointer-events-none disabled:opacity-40 ${buttonVariants[variant]} ${className}`}
       {...props}
     />
   )

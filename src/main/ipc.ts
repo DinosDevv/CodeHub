@@ -3,6 +3,16 @@ import { getDb, getDbPath } from './db'
 import { getProject, listProjects, setProjectArchived, upsertProjects } from './db/projects'
 import { getSetting, setSetting } from './db/settings'
 import { getLastCommitAt, getRecentCommits, getRepoStatus } from './services/git'
+import {
+  commitStaged,
+  fetchRemote,
+  getFileDiff,
+  getWorkingTree,
+  pullBranch,
+  pushBranch,
+  stageFiles,
+  unstageFiles
+} from './services/gitChanges'
 import { openFolder, openInVSCode } from './services/launcher'
 import { DEFAULT_IDLE_MINUTES, IDLE_MINUTES_KEY } from './services/idle'
 import { detectStack, findRepos, projectName } from './services/scanner'
@@ -163,6 +173,22 @@ export function registerIpc(): void {
 
   // git
   ipcMain.handle('git:status', (_, path: string) => getRepoStatus(assertKnownPath(path)))
+  ipcMain.handle('git:workingTree', (_, path: string) => getWorkingTree(assertKnownPath(path)))
+  ipcMain.handle('git:diff', (_, path: string, file: string, staged: boolean) =>
+    getFileDiff(assertKnownPath(path), file, staged)
+  )
+  ipcMain.handle('git:stage', (_, path: string, files: string[]) =>
+    stageFiles(assertKnownPath(path), files)
+  )
+  ipcMain.handle('git:unstage', (_, path: string, files: string[]) =>
+    unstageFiles(assertKnownPath(path), files)
+  )
+  ipcMain.handle('git:commit', (_, path: string, message: string) =>
+    commitStaged(assertKnownPath(path), message)
+  )
+  ipcMain.handle('git:push', (_, path: string) => pushBranch(assertKnownPath(path)))
+  ipcMain.handle('git:pull', (_, path: string) => pullBranch(assertKnownPath(path)))
+  ipcMain.handle('git:fetch', (_, path: string) => fetchRemote(assertKnownPath(path)))
   ipcMain.handle('git:log', (_, path: string, limit: number) =>
     getRecentCommits(assertKnownPath(path), limit)
   )

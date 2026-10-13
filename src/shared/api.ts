@@ -34,6 +34,45 @@ export interface RepoStatus {
   hasRemote: boolean
 }
 
+export type FileChangeKind =
+  'modified' | 'added' | 'deleted' | 'renamed' | 'untracked' | 'conflicted'
+
+export interface ChangedFile {
+  path: string
+  /** Previous path, for renames. */
+  from?: string
+  kind: FileChangeKind
+  /** Null when unknown (binary or untracked). */
+  insertions: number | null
+  deletions: number | null
+}
+
+export interface WorkingTree {
+  branch: string | null
+  /** e.g. "origin/main"; null when the branch was never pushed. */
+  upstream: string | null
+  ahead: number
+  behind: number
+  hasRemote: boolean
+  hasCommits: boolean
+  /** A file staged and then edited again appears in both lists. */
+  staged: ChangedFile[]
+  unstaged: ChangedFile[]
+}
+
+export interface FileDiff {
+  text: string
+  truncated: boolean
+  binary: boolean
+}
+
+export interface CommitOutcome {
+  hash: string
+  files: number
+  insertions: number
+  deletions: number
+}
+
 export interface Commit {
   hash: string
   message: string
@@ -200,6 +239,18 @@ export interface Api {
   git: {
     status(path: string): Promise<RepoStatus>
     log(path: string, limit: number): Promise<Commit[]>
+    workingTree(path: string): Promise<WorkingTree>
+    diff(path: string, file: string, staged: boolean): Promise<FileDiff>
+    stage(path: string, files: string[]): Promise<void>
+    unstage(path: string, files: string[]): Promise<void>
+    commit(path: string, message: string): Promise<CommitOutcome>
+    push(path: string): Promise<void>
+    /** Fast-forward only; never creates merge commits. */
+    pull(path: string): Promise<void>
+    /** Updates ahead/behind from the remote without changing files. */
+    fetch(path: string): Promise<void>
+    /** Fires with the repo path after anything here changes it. */
+    onChanged(listener: (path: string) => void): () => void
   }
   launch: {
     vscode(path: string): Promise<void>
