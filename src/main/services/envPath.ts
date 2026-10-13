@@ -81,3 +81,33 @@ export function envWithCurrentPath(base: NodeJS.ProcessEnv = process.env): Recor
   env[process.platform === 'win32' ? 'Path' : 'PATH'] = currentPath()
   return env
 }
+
+/** Every match for `command` on the current PATH, in PATH order. */
+export function whichAll(command: string): string[] {
+  try {
+    const out = execFileSync(process.platform === 'win32' ? 'where.exe' : 'which', [command], {
+      encoding: 'utf8',
+      windowsHide: true,
+      env: envWithCurrentPath()
+    })
+    return out.split(/\r?\n/).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+export function which(command: string): string | null {
+  return whichAll(command)[0] ?? null
+}
+
+/**
+ * When Lowtide itself was started from inside a Claude Code session (CLAUDECODE
+ * is set, e.g. `npm run dev` in Claude's terminal), that session's CLAUDE_*
+ * variables would make every Claude we launch act as its child: conversations
+ * wouldn't be saved and session ids would be wrong. They're session-scoped, so
+ * drop them. A normal launch has no CLAUDECODE and keeps your own settings.
+ */
+export function withoutParentClaude(env: Record<string, string>): Record<string, string> {
+  if (!Object.keys(env).some((k) => k.toUpperCase() === 'CLAUDECODE')) return env
+  return Object.fromEntries(Object.entries(env).filter(([k]) => !/^CLAUDE/i.test(k)))
+}

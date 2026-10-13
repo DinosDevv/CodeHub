@@ -5,12 +5,14 @@ import {
   GitCommitHorizontal,
   Minus,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react'
 import { useState } from 'react'
 import { useFileDiff, useWorkingTree, type DiffTarget } from '../hooks/useWorkingTree'
 import {
   commit,
+  draftCommitMessage,
   fetchRemote,
   kindLabels,
   pull,
@@ -23,7 +25,7 @@ import {
 import { DiffView } from './DiffView'
 import { Button, Card, Chip, EmptyState, IconButton } from './ui'
 
-type Busy = 'stage' | 'commit' | 'push' | 'pull' | 'fetch' | null
+type Busy = 'stage' | 'commit' | 'push' | 'pull' | 'fetch' | 'draft' | null
 
 /** Stage files, commit, push and pull — without leaving the project page. */
 export function ChangesPanel({ path, delay }: { path: string; delay: number }): React.JSX.Element {
@@ -40,6 +42,11 @@ export function ChangesPanel({ path, delay }: { path: string; delay: number }): 
     } finally {
       setBusy(null)
     }
+  }
+
+  const draft = async (): Promise<void> => {
+    const suggestion = await run('draft', () => draftCommitMessage(path))
+    if (suggestion) setMessage(suggestion)
   }
 
   const doCommit = async (): Promise<void> => {
@@ -159,8 +166,13 @@ export function ChangesPanel({ path, delay }: { path: string; delay: number }): 
                   doCommit()
                 }
               }}
-              rows={2}
-              placeholder="what did you change? (Ctrl+Enter to commit)"
+              rows={message.includes('\n') ? 5 : 2}
+              disabled={busy === 'draft'}
+              placeholder={
+                busy === 'draft'
+                  ? 'claude is reading your changes…'
+                  : 'what did you change? (Ctrl+Enter to commit)'
+              }
               className="w-full resize-none bg-transparent px-2 py-1 text-sm text-fg outline-none select-text placeholder:text-muted/60"
             />
             <div className="flex items-center justify-between gap-2 px-1">
@@ -169,13 +181,27 @@ export function ChangesPanel({ path, delay }: { path: string; delay: number }): 
                   ? 'stage some files first'
                   : `${tree.staged.length} file${tree.staged.length === 1 ? '' : 's'} staged`}
               </span>
-              <Button
-                disabled={busy !== null || !message.trim() || tree.staged.length === 0}
-                onClick={doCommit}
-              >
-                <GitCommitHorizontal size={15} />
-                {busy === 'commit' ? 'committing…' : 'commit'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  disabled={busy !== null || tree.staged.length === 0}
+                  onClick={draft}
+                  title="claude drafts a message from your staged changes"
+                >
+                  <Sparkles
+                    size={15}
+                    className={`text-accent ${busy === 'draft' ? 'animate-spin' : ''}`}
+                  />
+                  {busy === 'draft' ? 'writing…' : 'write it'}
+                </Button>
+                <Button
+                  disabled={busy !== null || !message.trim() || tree.staged.length === 0}
+                  onClick={doCommit}
+                >
+                  <GitCommitHorizontal size={15} />
+                  {busy === 'commit' ? 'committing…' : 'commit'}
+                </Button>
+              </div>
             </div>
           </div>
         </>

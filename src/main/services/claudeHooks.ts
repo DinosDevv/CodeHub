@@ -9,7 +9,10 @@ import type { ClaudeHooksStatus } from '../../shared/api'
 // commands Claude runs on events like "user sent a prompt" or "finished". Our
 // hook is a tiny Node script that forwards the event to Lowtide's local server.
 
-export const HOOK_PORT = Number(process.env['LOWTIDE_HOOK_PORT']) || 47821
+/** The port the installed hook script uses unless its environment says otherwise. */
+const DEFAULT_PORT = 47821
+/** The port this Lowtide listens on (a test instance can override it). */
+export const HOOK_PORT = Number(process.env['LOWTIDE_HOOK_PORT']) || DEFAULT_PORT
 
 const SETTINGS_PATH = join(homedir(), '.claude', 'settings.json')
 const SCRIPT_PATH = join(homedir(), '.lowtide', 'claude-hook.js')
@@ -33,6 +36,8 @@ const SCRIPT = `// Lowtide: forwards Claude Code hook events to the Lowtide app.
 // Installed by Lowtide; safe to delete (then remove the hooks in Lowtide's settings).
 const http = require('http')
 const done = () => process.exit(0)
+// Lowtide's own helper runs (e.g. writing a commit message) stay out of the live list.
+if (process.env.LOWTIDE_QUIET) done()
 setTimeout(done, 2000)
 let input = ''
 process.stdin.setEncoding('utf8')
@@ -48,7 +53,7 @@ process.stdin.on('end', () => {
   const req = http.request(
     {
       host: '127.0.0.1',
-      port: Number(process.env.LOWTIDE_HOOK_PORT) || ${HOOK_PORT},
+      port: Number(process.env.LOWTIDE_HOOK_PORT) || ${DEFAULT_PORT},
       path: '/claude-event',
       method: 'POST',
       headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) },

@@ -1,7 +1,14 @@
-import type { ClaudeHooksStatus, ClaudeLive, ClaudeState } from '../../../shared/api'
-import { openDock, setActiveTerminal } from './dock'
+import type {
+  ClaudeHooksStatus,
+  ClaudeLive,
+  ClaudeSessionSummary,
+  ClaudeState
+} from '../../../shared/api'
+import { openDock, setActiveTerminal, showClaudeHint } from './dock'
 import { errorMessage } from './errors'
 import type { Navigate } from './navigation'
+import { moveTask, type Task } from './tasks'
+import { getTerminalSupport, openTerminal } from './terminals'
 import { toast } from './toast'
 
 export type { ClaudeHooksStatus, ClaudeLive, ClaudeState }
@@ -62,4 +69,52 @@ export function focusClaude(live: ClaudeLive, navigate: Navigate): void {
   } else if (live.projectId !== null) {
     navigate({ page: 'project', id: live.projectId })
   }
+}
+
+export const getClaudeHistory = (
+  projectId: number,
+  limit: number
+): Promise<ClaudeSessionSummary[]> => window.api.claude.history(projectId, limit)
+
+export type { ClaudeSessionSummary }
+
+function clip(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text
+}
+
+/** The first message Claude gets when you hand it a task. */
+export function taskPrompt(task: Task): string {
+  return [
+    `Let's work on this task: ${task.title}`,
+    task.notes ? `Notes: ${task.notes}` : '',
+    'Start by looking at the relevant code, then tell me your plan before changing anything.'
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+}
+
+/** Opens a Claude tab with the task as its first message and marks the task in progress. */
+export async function workOnTask(task: Task): Promise<void> {
+  const support = await getTerminalSupport()
+  if (!support.claude) {
+    showClaudeHint(true)
+    return
+  }
+  if (task.status === 'todo') await moveTask(task.id, 'doing')
+  await openTerminal({
+    projectId: task.projectId,
+    kind: 'claude',
+    prompt: taskPrompt(task),
+    title: clip(task.title, 28)
+  })
+}
+
+/** Reopens an earlier Claude conversation in a new tab. */
+export async function resumeClaude(projectId: number, sessionId: string): Promise<void> {
+  const support = await getTerminalSupport()
+  if (!support.claude) {
+    showClaudeHint(true)
+    return
+  }
+  await openTerminal({ projectId, kind: 'claude', resumeSessionId: sessionId, title: 'resumed' })
 }

@@ -1,4 +1,5 @@
-import { Check, Pause, Play, StickyNote, Trash2 } from 'lucide-react'
+import { Check, Pause, Play, Sparkles, StickyNote, Trash2 } from 'lucide-react'
+import { workOnTask } from '../lib/claude'
 import { useState } from 'react'
 import {
   moveTask,
@@ -121,6 +122,11 @@ export function TaskItem({
           {task.status === 'doing' && (
             <TaskAction label="back to up next" onClick={() => moveTask(task.id, 'todo')}>
               <Pause size={13} />
+            </TaskAction>
+          )}
+          {!done && (
+            <TaskAction label="work on this with claude" onClick={() => workOnTask(task)}>
+              <Sparkles size={13} className="text-accent" />
             </TaskAction>
           )}
           <TaskAction label="notes" onClick={() => setNotesOpen((v) => !v)}>

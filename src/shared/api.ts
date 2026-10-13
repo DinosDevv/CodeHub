@@ -160,6 +160,12 @@ export interface NewTerminal {
   kind: TerminalKind
   /** npm script name, for kind 'script'. */
   script?: string
+  /** Claude tabs: a first message to start the conversation with. */
+  prompt?: string
+  /** Claude tabs: reopen this earlier Claude conversation instead. */
+  resumeSessionId?: string
+  /** Shown on the tab, e.g. the task being worked on. */
+  title?: string
   cols?: number
   rows?: number
 }
@@ -195,6 +201,20 @@ export interface ClaudeLive {
   message: string | null
   startedAt: number
   updatedAt: number
+}
+
+/** One past (or ongoing) Claude Code conversation in a project. */
+export interface ClaudeSessionSummary {
+  sessionId: string
+  /** What `claude --resume` needs (the conversation file's id), when known. */
+  resumeId: string | null
+  startedAt: number
+  lastAt: number
+  ended: boolean
+  /** What you asked, oldest first. */
+  prompts: string[]
+  /** How many times Claude stopped to ask for permission or input. */
+  waits: number
 }
 
 export interface ClaudeHooksStatus {
@@ -259,6 +279,7 @@ export interface Api {
     hooks(): Promise<ClaudeHooksStatus>
     installHooks(): Promise<ClaudeHooksStatus>
     removeHooks(): Promise<ClaudeHooksStatus>
+    history(projectId: number, limit: number): Promise<ClaudeSessionSummary[]>
     onChanged(listener: () => void): () => void
     /** A notification was clicked: bring this Claude session into view. */
     onFocus(listener: (live: ClaudeLive) => void): () => void
@@ -282,6 +303,8 @@ export interface Api {
     pull(path: string): Promise<void>
     /** Updates ahead/behind from the remote without changing files. */
     fetch(path: string): Promise<void>
+    /** Asks Claude for a commit message describing the staged changes. */
+    writeCommitMessage(path: string): Promise<string>
     /** Fires with the repo path after anything here changes it. */
     onChanged(listener: (path: string) => void): () => void
   }

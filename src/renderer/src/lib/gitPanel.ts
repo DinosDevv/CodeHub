@@ -101,3 +101,8 @@ export function parseDiff(text: string): DiffLine[] {
     lines.pop()
   return lines
 }
+
+/** Claude drafts a commit message from the staged diff. Resolves null on failure. */
+export async function draftCommitMessage(path: string): Promise<string | null> {
+  return attempt(() => window.api.git.writeCommitMessage(path))
+}

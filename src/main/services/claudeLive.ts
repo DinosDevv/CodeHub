@@ -1,6 +1,7 @@
 import { BrowserWindow, Notification } from 'electron'
 import { getDb } from '../db'
 import { listProjects } from '../db/projects'
+import { getActiveSession } from '../db/sessions'
 import { broadcast, sendToWindows } from '../events'
 import type { ClaudeLive, ClaudeState } from '../../shared/api'
 
@@ -8,6 +9,8 @@ import type { ClaudeLive, ClaudeState } from '../../shared/api'
 export interface HookEvent {
   hook_event_name: string
   session_id?: string
+  /** The conversation file Claude writes; its name is the id `claude --resume` takes. */
+  transcript_path?: string
   cwd?: string
   prompt?: string
   message?: string
@@ -20,6 +23,14 @@ export interface HookEvent {
 const STALE_MS = 6 * 60 * 60 * 1000
 
 const live = new Map<string, ClaudeLive>()
+
+const IDLE_REMINDER = /waiting for your input/i
+
+/** "…/projects/<dir>/04105093-….jsonl" → "04105093-…" */
+function resumeIdOf(event?: HookEvent): string | null {
+  const match = /([0-9a-f-]{8,64})\.jsonl$/i.exec(event?.transcript_path ?? '')
+  return match?.[1] ?? null
+}
 
 const norm = (p: string): string => p.replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase()
 
@@ -42,15 +53,24 @@ function clip(text: string | undefined, max = 160): string | null {
   return one.length > max ? `${one.slice(0, max - 1)}…` : one
 }
 
-function record(entry: ClaudeLive, type: string, detail: string | null): void {
+/** Saves an event; it's linked to your coding session when that's on the same project. */
+function record(entry: ClaudeLive, type: string, detail: string | null, event?: HookEvent): void {
+  const active = getActiveSession()
+  const sessionId = active && active.projectId === entry.projectId ? active.id : null
   getDb()
     .prepare(
-      'INSERT INTO claude_events (project_id, session_id, type, payload, at) VALUES (?, NULL, ?, ?, ?)'
+      'INSERT INTO claude_events (project_id, session_id, type, payload, at) VALUES (?, ?, ?, ?, ?)'
     )
     .run(
       entry.projectId,
+      sessionId,
       type,
-      JSON.stringify({ sessionId: entry.sessionId, cwd: entry.cwd, detail }),
+      JSON.stringify({
+        sessionId: entry.sessionId,
+        resumeId: resumeIdOf(event),
+        cwd: entry.cwd,
+        detail
+      }),
       Date.now()
     )
 }
@@ -80,7 +100,7 @@ export function handleHookEvent(event: HookEvent, terminalId: number | null): vo
   if (name === 'SessionEnd') {
     const ended = live.get(sessionId)
     if (ended) {
-      record(ended, 'SessionEnd', event.reason ?? null)
+      record(ended, 'SessionEnd', event.reason ?? null, event)
       live.delete(sessionId)
       broadcast('claude:changed')
     }
@@ -110,26 +130,31 @@ export function handleHookEvent(event: HookEvent, terminalId: number | null): vo
 
   switch (name) {
     case 'SessionStart':
-      record(entry, 'SessionStart', event.source ?? null)
+      record(entry, 'SessionStart', event.source ?? null, event)
       break
     case 'UserPromptSubmit':
       entry.state = 'working'
       entry.message = clip(event.prompt)
-      record(entry, 'UserPromptSubmit', entry.message)
+      record(entry, 'UserPromptSubmit', entry.message, event)
       break
     case 'PostToolUse':
       // A tool just ran, so Claude is working (e.g. right after you approved it).
       entry.state = 'working'
       break
     case 'Notification':
+      // Claude also sends an idle reminder a while after finishing. That's still
+      // "your turn", not a request for permission, so it doesn't count as waiting.
+      if (IDLE_REMINDER.test(event.message ?? '')) {
+        if (before !== 'working') return
+      }
       entry.state = 'waiting'
       entry.message = clip(event.message) ?? 'Claude needs you'
-      record(entry, 'Notification', entry.message)
+      record(entry, 'Notification', entry.message, event)
       notify(entry, `✦ claude needs you in ${where}`, entry.message)
       break
     case 'Stop':
       entry.state = 'idle'
-      record(entry, 'Stop', null)
+      record(entry, 'Stop', null, event)
       if (before === 'working') notify(entry, `✦ claude finished in ${where}`, 'your turn ☕')
       break
     default:

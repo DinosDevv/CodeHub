@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   focusClaude,
+  getClaudeHistory,
   getHooksStatus,
   installHooks,
   listClaudeLive,
@@ -8,7 +9,8 @@ import {
   onClaudeFocus,
   removeHooks,
   type ClaudeHooksStatus,
-  type ClaudeLive
+  type ClaudeLive,
+  type ClaudeSessionSummary
 } from '../lib/claude'
 import type { Navigate } from '../lib/navigation'
 
@@ -25,6 +27,26 @@ export function useClaudeLive(): ClaudeLive[] {
   }, [])
 
   return live
+}
+
+/** A project's earlier Claude conversations; refreshes as new hook events arrive. */
+export function useClaudeHistory(projectId: number, limit = 6): ClaudeSessionSummary[] | null {
+  const [history, setHistory] = useState<ClaudeSessionSummary[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = (): void => {
+      getClaudeHistory(projectId, limit).then((h) => !cancelled && setHistory(h))
+    }
+    load()
+    const unsubscribe = onClaudeChanged(load)
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [projectId, limit])
+
+  return history
 }
 
 export function useHooksStatus(): {

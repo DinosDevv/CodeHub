@@ -1,6 +1,4 @@
-import { execFileSync } from 'child_process'
 import { existsSync, readFileSync } from 'fs'
-import { homedir } from 'os'
 import { dirname, join } from 'path'
 import * as pty from 'node-pty'
 import { getProject } from '../db/projects'
@@ -8,7 +6,8 @@ import { getSetting } from '../db/settings'
 import { broadcast, sendToWindows } from '../events'
 import { HOOK_PORT } from './claudeHooks'
 import { forgetTerminal } from './claudeLive'
-import { envWithCurrentPath } from './envPath'
+import { claudeShellCommand } from './claudeCli'
+import { envWithCurrentPath, whichAll, withoutParentClaude } from './envPath'
 import type { NewTerminal, TerminalInfo, TerminalShell } from '../../shared/api'
 
 export const SHELL_KEY = 'terminalShell'
@@ -36,47 +35,6 @@ function flush(): void {
     sendToWindows('terminals:data', t.info.id, t.pending)
     t.pending = ''
   }
-}
-
-/** Every match for `command` on the current PATH, in PATH order. */
-function whichAll(command: string): string[] {
-  try {
-    const out = execFileSync(process.platform === 'win32' ? 'where.exe' : 'which', [command], {
-      encoding: 'utf8',
-      windowsHide: true,
-      env: envWithCurrentPath()
-    })
-    return out.split(/\r?\n/).filter(Boolean)
-  } catch {
-    return []
-  }
-}
-
-function which(command: string): string | null {
-  return whichAll(command)[0] ?? null
-}
-
-/** Where Claude Code's native installer puts it, in case PATH doesn't list it. */
-const CLAUDE_DEFAULT = join(
-  homedir(),
-  '.local',
-  'bin',
-  process.platform === 'win32' ? 'claude.exe' : 'claude'
-)
-
-let claudeCache: { at: number; command: string | null } | null = null
-
-/** How to launch Claude Code: `claude` if it's on PATH, else its full path, else null. */
-function claudeCommand(): string | null {
-  if (!claudeCache || Date.now() - claudeCache.at > 30_000) {
-    const command = which('claude') ? 'claude' : existsSync(CLAUDE_DEFAULT) ? CLAUDE_DEFAULT : null
-    claudeCache = { at: Date.now(), command }
-  }
-  return claudeCache.command
-}
-
-export function isClaudeAvailable(): boolean {
-  return claudeCommand() !== null
 }
 
 let gitBashCache: string | null | undefined
@@ -114,8 +72,9 @@ export function projectScripts(projectId: number): string[] {
   }
 }
 
-// Script names go into a shell command line, so only allow plain names.
+// Script names and session ids go into a shell command line, so only allow plain ones.
 const SAFE_SCRIPT = /^[\w:.@/-]+$/
+const SAFE_SESSION_ID = /^[0-9a-f-]{8,64}$/i
 
 function shellCommand(shell: TerminalShell, run: string | null): { file: string; args: string[] } {
   if (shell === 'gitbash') {
@@ -133,17 +92,19 @@ function shellCommand(shell: TerminalShell, run: string | null): { file: string;
   }
 }
 
-/** A clean environment: never leak Electron's own variables into user processes. */
-/** Claude's hook reads these to tell Lowtide which tab an event came from. */
-function childEnv(terminalId: number): Record<string, string> {
+/**
+ * A clean environment: never leak Electron's own variables into user processes.
+ * Claude's hook reads LOWTIDE_TERMINAL_ID to tell Lowtide which tab an event came from.
+ */
+function childEnv(terminalId: number, extra: Record<string, string> = {}): Record<string, string> {
   const env: Record<string, string> = {}
-  for (const [k, v] of Object.entries(envWithCurrentPath())) {
+  for (const [k, v] of Object.entries(withoutParentClaude(envWithCurrentPath()))) {
     if (!k.startsWith('ELECTRON_') && k !== 'LOWTIDE_DATA_DIR') env[k] = v
   }
   env.COLORTERM = 'truecolor'
   env.LOWTIDE_TERMINAL_ID = String(terminalId)
   env.LOWTIDE_HOOK_PORT = String(HOOK_PORT)
-  return env
+  return { ...env, ...extra }
 }
 
 export function createTerminal(opts: NewTerminal): TerminalInfo {
@@ -153,12 +114,22 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
   const shell = getSetting<TerminalShell>(SHELL_KEY, 'powershell')
   let run: string | null = null
   let title: string
+  const extraEnv: Record<string, string> = {}
   if (opts.kind === 'claude') {
-    const claude = claudeCommand()
+    const claude = claudeShellCommand(shell)
     if (!claude) throw new Error('Claude Code isn’t installed yet.')
-    // A full path (when PATH doesn't list it) has to be quoted and called explicitly.
-    run = claude === 'claude' ? 'claude' : shell === 'gitbash' ? `'${claude}'` : `& '${claude}'`
-    title = '✦ claude'
+    run = claude
+    title = opts.title ? `✦ ${opts.title}` : '✦ claude'
+    if (opts.resumeSessionId) {
+      if (!SAFE_SESSION_ID.test(opts.resumeSessionId)) throw new Error('Invalid Claude session.')
+      run += ` --resume ${opts.resumeSessionId}`
+    } else if (opts.prompt?.trim()) {
+      // The prompt travels in an environment variable, so its text is never parsed
+      // as shell syntax. Windows PowerShell 5.1 mangles double quotes inside
+      // arguments to native programs, so those become single quotes.
+      extraEnv.LOWTIDE_CLAUDE_PROMPT = opts.prompt.trim().replace(/"/g, "'").replace(/\0/g, '')
+      run += shell === 'gitbash' ? ' "$LOWTIDE_CLAUDE_PROMPT"' : ' $env:LOWTIDE_CLAUDE_PROMPT'
+    }
   } else if (opts.kind === 'script') {
     if (
       !opts.script ||
@@ -180,7 +151,7 @@ export function createTerminal(opts: NewTerminal): TerminalInfo {
     cols: opts.cols ?? 100,
     rows: opts.rows ?? 30,
     cwd: project.path,
-    env: childEnv(id),
+    env: childEnv(id, extraEnv),
     useConpty: true
   })
 

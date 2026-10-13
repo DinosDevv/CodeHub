@@ -64,6 +64,7 @@ const api: Api = {
     hooks: () => ipcRenderer.invoke('claude:hooks'),
     installHooks: () => ipcRenderer.invoke('claude:installHooks'),
     removeHooks: () => ipcRenderer.invoke('claude:removeHooks'),
+    history: (projectId, limit) => ipcRenderer.invoke('claude:history', projectId, limit),
     onChanged: (listener) => subscribe('claude:changed', listener),
     onFocus: (listener) => {
       const handler = (_: unknown, live: ClaudeLive): void => listener(live)
@@ -88,6 +89,7 @@ const api: Api = {
     push: (path) => ipcRenderer.invoke('git:push', path),
     pull: (path) => ipcRenderer.invoke('git:pull', path),
     fetch: (path) => ipcRenderer.invoke('git:fetch', path),
+    writeCommitMessage: (path) => ipcRenderer.invoke('git:writeCommitMessage', path),
     onChanged: (listener) => {
       const handler = (_: unknown, path: string): void => listener(path)
       ipcRenderer.on('git:changed', handler)

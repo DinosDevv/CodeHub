@@ -1,5 +1,6 @@
 import { ArrowLeft, Code, Eye, EyeOff, FolderOpen, GitCommitHorizontal } from 'lucide-react'
 import { ChangesPanel } from '../components/ChangesPanel'
+import { ClaudeHistory } from '../components/ClaudeHistory'
 import { ProjectSessions } from '../components/ProjectSessions'
 import { ProjectTerminals } from '../components/ProjectTerminals'
 import { RepoBadges } from '../components/RepoBadges'
@@ -93,6 +94,7 @@ export function ProjectDetail({
             )}
           </Card>
           <ProjectSessions projectId={project.id} delay={180} />
+          <ClaudeHistory projectId={project.id} delay={210} />
         </div>
 
         <div className="flex flex-col gap-5 lg:col-span-2">

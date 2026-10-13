@@ -22,11 +22,12 @@ import { addTask, deleteTask, listTasks, moveTask, updateTask } from './db/tasks
 import { broadcast } from './events'
 import { hooksStatus, installHooks, removeHooks } from './services/claudeHooks'
 import { listLive } from './services/claudeLive'
+import { isClaudeAvailable, writeCommitMessage } from './services/claudeCli'
+import { claudeHistory } from './db/claudeEvents'
 import {
   closeTerminal,
   createTerminal,
   findGitBash,
-  isClaudeAvailable,
   listTerminals,
   projectScripts,
   resizeTerminal,
@@ -157,6 +158,9 @@ export function registerIpc(): void {
   ipcMain.handle('claude:hooks', () => hooksStatus())
   ipcMain.handle('claude:installHooks', () => installHooks())
   ipcMain.handle('claude:removeHooks', () => removeHooks())
+  ipcMain.handle('claude:history', (_, projectId: number, limit: number) =>
+    claudeHistory(projectId, limit)
+  )
 
   // projects
   ipcMain.handle('projects:list', () => listProjects())
@@ -197,6 +201,9 @@ export function registerIpc(): void {
   ipcMain.handle('git:push', (_, path: string) => pushBranch(assertKnownPath(path)))
   ipcMain.handle('git:pull', (_, path: string) => pullBranch(assertKnownPath(path)))
   ipcMain.handle('git:fetch', (_, path: string) => fetchRemote(assertKnownPath(path)))
+  ipcMain.handle('git:writeCommitMessage', (_, path: string) =>
+    writeCommitMessage(assertKnownPath(path))
+  )
   ipcMain.handle('git:log', (_, path: string, limit: number) =>
     getRecentCommits(assertKnownPath(path), limit)
   )
