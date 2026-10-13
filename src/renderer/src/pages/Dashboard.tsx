@@ -1,4 +1,5 @@
 import { Coffee, Play } from 'lucide-react'
+import { OpenTasks } from '../components/OpenTasks'
 import { Button, Card, EmptyState, PageHeader } from '../components/ui'
 import { useActiveSession } from '../hooks/useActiveSession'
 import { useNow } from '../hooks/useNow'
@@ -50,7 +51,9 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
           </p>
         </Card>
 
-        <Card title="this week by project" className="lg:col-span-2" delay={240}>
+        <OpenTasks navigate={navigate} className="lg:col-span-2" delay={240} />
+
+        <Card title="this week by project" className="lg:order-last lg:col-span-3" delay={360}>
           {!stats || stats.byProject.length === 0 ? (
             <EmptyState>no sessions this week yet — the first one&apos;s the coziest.</EmptyState>
           ) : (

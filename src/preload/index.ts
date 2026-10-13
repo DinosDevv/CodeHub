@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { Api } from '../shared/api'
 
+function subscribe(channel: string, listener: () => void): () => void {
+  const handler = (): void => listener()
+  ipcRenderer.on(channel, handler)
+  return () => ipcRenderer.removeListener(channel, handler)
+}
+
 const api: Api = {
   app: {
     getInfo: () => ipcRenderer.invoke('app:getInfo')
@@ -20,11 +26,15 @@ const api: Api = {
     stop: (note) => ipcRenderer.invoke('sessions:stop', note),
     list: (projectId, limit) => ipcRenderer.invoke('sessions:list', projectId, limit),
     stats: () => ipcRenderer.invoke('sessions:stats'),
-    onChanged: (listener) => {
-      const handler = (): void => listener()
-      ipcRenderer.on('sessions:changed', handler)
-      return () => ipcRenderer.removeListener('sessions:changed', handler)
-    }
+    onChanged: (listener) => subscribe('sessions:changed', listener)
+  },
+  tasks: {
+    list: (query) => ipcRenderer.invoke('tasks:list', query),
+    add: (projectId, title) => ipcRenderer.invoke('tasks:add', projectId, title),
+    update: (id, patch) => ipcRenderer.invoke('tasks:update', id, patch),
+    move: (id, status, beforeId) => ipcRenderer.invoke('tasks:move', id, status, beforeId),
+    remove: (id) => ipcRenderer.invoke('tasks:remove', id),
+    onChanged: (listener) => subscribe('tasks:changed', listener)
   },
   projects: {
     list: () => ipcRenderer.invoke('projects:list'),

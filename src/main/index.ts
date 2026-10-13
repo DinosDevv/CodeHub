@@ -39,31 +39,46 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.codehub.app')
+// A separate data folder (e.g. for testing without touching your real data).
+if (process.env['CODEHUB_DATA_DIR']) app.setPath('userData', process.env['CODEHUB_DATA_DIR'])
 
-  // F12 toggles DevTools in dev; Ctrl+R is ignored in production.
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
+// One CodeHub per data folder: two copies would both run the session clock.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) return
+    if (win.isMinimized()) win.restore()
+    win.focus()
   })
 
-  getDb()
-  registerIpc()
-  startIdleWatch()
-  createWindow()
+  app.whenReady().then(() => {
+    electronApp.setAppUserModelId('com.codehub.app')
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    // F12 toggles DevTools in dev; Ctrl+R is ignored in production.
+    app.on('browser-window-created', (_, window) => {
+      optimizer.watchWindowShortcuts(window)
+    })
+
+    getDb()
+    registerIpc()
+    startIdleWatch()
+    createWindow()
+
+    app.on('activate', function () {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
   })
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
 
-app.on('will-quit', () => {
-  pauseForQuit()
-  closeDb()
-})
+  app.on('will-quit', () => {
+    pauseForQuit()
+    closeDb()
+  })
+}

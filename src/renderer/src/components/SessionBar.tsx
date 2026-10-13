@@ -1,6 +1,7 @@
 import { Pause, Play, Square } from 'lucide-react'
 import { useActiveSession } from '../hooks/useActiveSession'
 import { useNow } from '../hooks/useNow'
+import { useTasks } from '../hooks/useTasks'
 import type { Navigate } from '../lib/navigation'
 import { openStartDialog, openWrapUpDialog } from '../lib/sessionDialogs'
 import {
@@ -16,6 +17,10 @@ import { IconButton } from './ui'
 export function SessionBar({ navigate }: { navigate: Navigate }): React.JSX.Element | null {
   const { active, loaded } = useActiveSession()
   const now = useNow(1000)
+  const doing = useTasks(
+    active ? { projectId: active.projectId, statuses: ['doing'], limit: 1 } : null
+  )
+  const focusTask = doing?.[0] ?? null
 
   if (!loaded) return null
 
@@ -53,6 +58,11 @@ export function SessionBar({ navigate }: { navigate: Navigate }): React.JSX.Elem
           {active.projectName}
         </span>
       </button>
+      {focusTask && (
+        <p className="mt-1 truncate pl-4 text-xs text-muted" title={focusTask.title}>
+          ↳ {focusTask.title}
+        </p>
+      )}
       <p
         className={`mt-1 font-mono text-2xl font-light tabular-nums ${paused ? 'text-muted' : ''}`}
       >

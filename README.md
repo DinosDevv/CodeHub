@@ -23,3 +23,11 @@ npm run build:win
 - `src/preload`: the typed `window.api` bridge
 - `src/shared`: types shared by main and renderer
 - `src/renderer`: React UI. Logic lives in `lib/` and `hooks/`, components only render. Colors and motion are set by the tokens in `assets/main.css`.
+
+## Testing without touching your data
+
+Set `CODEHUB_DATA_DIR` to run against a separate database:
+
+```bash
+CODEHUB_DATA_DIR=/tmp/codehub-test npm run dev
+```

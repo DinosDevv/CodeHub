@@ -1,4 +1,4 @@
-import { GitCommitHorizontal, Moon } from 'lucide-react'
+import { CheckCircle2, GitCommitHorizontal, Moon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useActiveSession } from '../hooks/useActiveSession'
 import { useNow } from '../hooks/useNow'
@@ -80,13 +80,20 @@ function SummaryView({ summary }: { summary: SessionSummary }): React.JSX.Elemen
         <Chip tone="glow">
           {summary.commits.length} commit{summary.commits.length === 1 ? '' : 's'}
         </Chip>
+        {summary.tasksDone.length > 0 && (
+          <Chip tone="accent">
+            {summary.tasksDone.length} task{summary.tasksDone.length === 1 ? '' : 's'} done
+          </Chip>
+        )}
         {insertions > 0 && <Chip tone="success">+{insertions}</Chip>}
         {deletions > 0 && <Chip tone="danger">−{deletions}</Chip>}
       </div>
 
       <div className="mt-4 max-h-56 overflow-auto">
         {summary.commits.length === 0 ? (
-          <EmptyState>no commits this time — thinking counts too.</EmptyState>
+          summary.tasksDone.length === 0 && (
+            <EmptyState>no commits this time — thinking counts too.</EmptyState>
+          )
         ) : (
           <ul className="flex flex-col gap-1">
             {summary.commits.map((c) => (
@@ -101,6 +108,17 @@ function SummaryView({ summary }: { summary: SessionSummary }): React.JSX.Elemen
           </ul>
         )}
       </div>
+
+      {summary.tasksDone.length > 0 && (
+        <ul className="mt-4 flex flex-col gap-1">
+          {summary.tasksDone.map((t) => (
+            <li key={t.id} className="flex items-center gap-2 text-sm">
+              <CheckCircle2 size={16} className="shrink-0 text-success" />
+              <span className="truncate">{t.title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {summary.note && (
         <p className="mt-4 rounded-2xl border border-line/50 bg-bg/30 px-4 py-3 text-sm text-muted italic">

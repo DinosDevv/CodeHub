@@ -52,5 +52,10 @@ export const migrations: string[] = [
     value  TEXT NOT NULL
   );
   ALTER TABLE projects ADD COLUMN last_commit_at INTEGER;
+  `,
+  `
+  ALTER TABLE tasks ADD COLUMN notes TEXT;
+  ALTER TABLE tasks ADD COLUMN position REAL NOT NULL DEFAULT 0;
+  CREATE INDEX idx_tasks_session ON tasks(session_id);
   `
 ]

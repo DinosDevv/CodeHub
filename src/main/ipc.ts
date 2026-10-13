@@ -8,7 +8,9 @@ import { DEFAULT_IDLE_MINUTES, IDLE_MINUTES_KEY } from './services/idle'
 import { detectStack, findRepos, projectName } from './services/scanner'
 import { pauseSession, resumeSession, startSession, stopSession } from './services/sessions'
 import { getActiveSession, getStats, listSessions } from './db/sessions'
-import type { AppInfo, ScanResult } from '../shared/api'
+import { addTask, deleteTask, listTasks, moveTask, updateTask } from './db/tasks'
+import { broadcast } from './events'
+import type { AppInfo, ScanResult, TaskQuery, TaskStatus } from '../shared/api'
 
 const ROOTS_KEY = 'projectRoots'
 
@@ -80,6 +82,25 @@ export function registerIpc(): void {
     listSessions(projectId, limit)
   )
   ipcMain.handle('sessions:stats', () => getStats(Date.now()))
+
+  // tasks
+  const changedTasks = <T>(result: T): T => {
+    broadcast('tasks:changed')
+    return result
+  }
+  ipcMain.handle('tasks:list', (_, query: TaskQuery) => listTasks(query))
+  ipcMain.handle('tasks:add', (_, projectId: number, title: string) =>
+    changedTasks(addTask(projectId, title))
+  )
+  ipcMain.handle(
+    'tasks:update',
+    (_, id: number, patch: { title?: string; notes?: string | null }) =>
+      changedTasks(updateTask(id, patch))
+  )
+  ipcMain.handle('tasks:move', (_, id: number, status: TaskStatus, beforeId: number | null) =>
+    changedTasks(moveTask(id, status, beforeId))
+  )
+  ipcMain.handle('tasks:remove', (_, id: number) => changedTasks(deleteTask(id)))
 
   // projects
   ipcMain.handle('projects:list', () => listProjects())

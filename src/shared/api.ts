@@ -67,6 +67,30 @@ export interface SessionSummary {
   durationMs: number
   note: string | null
   commits: SessionCommit[]
+  tasksDone: { id: number; title: string }[]
+}
+
+export type TaskStatus = 'todo' | 'doing' | 'done'
+
+export interface Task {
+  id: number
+  projectId: number
+  projectName: string
+  title: string
+  notes: string | null
+  status: TaskStatus
+  createdAt: number
+  doneAt: number | null
+  /** The session it was finished in, if any. */
+  sessionId: number | null
+}
+
+export interface TaskQuery {
+  /** Omit for every project. */
+  projectId?: number
+  /** Omit for all statuses. */
+  statuses?: TaskStatus[]
+  limit?: number
 }
 
 export interface SessionRecord {
@@ -112,6 +136,15 @@ export interface Api {
     list(projectId: number | null, limit: number): Promise<SessionRecord[]>
     stats(): Promise<SessionStats>
     /** Fires whenever the active session starts, pauses, resumes or ends. Returns an unsubscribe. */
+    onChanged(listener: () => void): () => void
+  }
+  tasks: {
+    list(query: TaskQuery): Promise<Task[]>
+    add(projectId: number, title: string): Promise<Task>
+    update(id: number, patch: { title?: string; notes?: string | null }): Promise<void>
+    /** Moves a task into `status`, placed before `beforeId` (or at the end). */
+    move(id: number, status: TaskStatus, beforeId: number | null): Promise<void>
+    remove(id: number): Promise<void>
     onChanged(listener: () => void): () => void
   }
   projects: {

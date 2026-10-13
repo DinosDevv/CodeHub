@@ -1,4 +1,3 @@
-import { BrowserWindow } from 'electron'
 import { getProject } from '../db/projects'
 import { activeElapsedMs } from '../../shared/sessions'
 import {
@@ -8,6 +7,8 @@ import {
   insertPause,
   insertSession
 } from '../db/sessions'
+import { broadcast } from '../events'
+import { tasksDoneInSession } from '../db/tasks'
 import { getCommitsSince } from './git'
 import type { ActiveSession, PauseReason, SessionSummary } from '../../shared/api'
 
@@ -15,9 +16,7 @@ import type { ActiveSession, PauseReason, SessionSummary } from '../../shared/ap
 // across renderer reloads and can be paused by idle detection.
 
 function notifyChanged(): void {
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send('sessions:changed')
-  }
+  broadcast('sessions:changed')
 }
 
 export function startSession(projectId: number): ActiveSession {
@@ -57,9 +56,17 @@ export async function stopSession(note: string | null): Promise<SessionSummary> 
   const project = getProject(active.projectId)
   const commits = project?.exists ? await getCommitsSince(project.path, active.startedAt) : []
   const cleanNote = note?.trim() || null
+  const tasksDone = tasksDoneInSession(active.id)
 
-  finishSession(active.id, now, cleanNote, { commits })
+  finishSession(active.id, now, cleanNote, { commits, tasksDone })
   notifyChanged()
 
-  return { id: active.id, projectName: active.projectName, durationMs, note: cleanNote, commits }
+  return {
+    id: active.id,
+    projectName: active.projectName,
+    durationMs,
+    note: cleanNote,
+    commits,
+    tasksDone
+  }
 }
