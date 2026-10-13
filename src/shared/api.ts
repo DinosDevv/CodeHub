@@ -113,6 +113,34 @@ export interface SessionStats {
   recent: SessionRecord[]
 }
 
+export type TerminalKind = 'shell' | 'claude' | 'script'
+export type TerminalShell = 'powershell' | 'gitbash'
+
+export interface NewTerminal {
+  projectId: number
+  kind: TerminalKind
+  /** npm script name, for kind 'script'. */
+  script?: string
+  cols?: number
+  rows?: number
+}
+
+export interface TerminalInfo {
+  id: number
+  projectId: number
+  projectName: string
+  kind: TerminalKind
+  title: string
+  /** Null while the process is still running. */
+  exitCode: number | null
+  createdAt: number
+}
+
+export interface TerminalSupport {
+  claude: boolean
+  gitBash: boolean
+}
+
 /** Every call either resolves with data or rejects with a readable message. */
 export interface Api {
   app: {
@@ -145,6 +173,22 @@ export interface Api {
     /** Moves a task into `status`, placed before `beforeId` (or at the end). */
     move(id: number, status: TaskStatus, beforeId: number | null): Promise<void>
     remove(id: number): Promise<void>
+    onChanged(listener: () => void): () => void
+  }
+  terminals: {
+    create(opts: NewTerminal): Promise<TerminalInfo>
+    list(): Promise<TerminalInfo[]>
+    /** Recent output, for repainting after a reload. */
+    buffer(id: number): Promise<string>
+    write(id: number, data: string): void
+    resize(id: number, cols: number, rows: number): void
+    close(id: number): Promise<void>
+    scripts(projectId: number): Promise<string[]>
+    support(): Promise<TerminalSupport>
+    getShell(): Promise<TerminalShell>
+    setShell(shell: TerminalShell): Promise<void>
+    onData(listener: (id: number, data: string) => void): () => void
+    onExit(listener: (id: number, exitCode: number) => void): () => void
     onChanged(listener: () => void): () => void
   }
   projects: {

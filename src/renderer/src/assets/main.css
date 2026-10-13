@@ -151,3 +151,10 @@ body {
     transition: none !important;
   }
 }
+
+/* Let the terminal sit on the dock's frosted glass instead of solid black. */
+.xterm .xterm-viewport,
+.xterm .xterm-screen,
+.xterm .xterm-scrollable-element {
+  background-color: transparent !important;
+}

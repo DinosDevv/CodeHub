@@ -10,7 +10,26 @@ import { pauseSession, resumeSession, startSession, stopSession } from './servic
 import { getActiveSession, getStats, listSessions } from './db/sessions'
 import { addTask, deleteTask, listTasks, moveTask, updateTask } from './db/tasks'
 import { broadcast } from './events'
-import type { AppInfo, ScanResult, TaskQuery, TaskStatus } from '../shared/api'
+import {
+  closeTerminal,
+  createTerminal,
+  findGitBash,
+  isClaudeAvailable,
+  listTerminals,
+  projectScripts,
+  resizeTerminal,
+  SHELL_KEY,
+  terminalBuffer,
+  writeTerminal
+} from './services/terminals'
+import type {
+  AppInfo,
+  NewTerminal,
+  ScanResult,
+  TaskQuery,
+  TaskStatus,
+  TerminalShell
+} from '../shared/api'
 
 const ROOTS_KEY = 'projectRoots'
 
@@ -101,6 +120,25 @@ export function registerIpc(): void {
     changedTasks(moveTask(id, status, beforeId))
   )
   ipcMain.handle('tasks:remove', (_, id: number) => changedTasks(deleteTask(id)))
+
+  // terminals
+  ipcMain.handle('terminals:create', (_, opts: NewTerminal) => createTerminal(opts))
+  ipcMain.handle('terminals:list', () => listTerminals())
+  ipcMain.handle('terminals:buffer', (_, id: number) => terminalBuffer(id))
+  ipcMain.on('terminals:write', (_, id: number, data: string) => writeTerminal(id, data))
+  ipcMain.on('terminals:resize', (_, id: number, cols: number, rows: number) =>
+    resizeTerminal(id, cols, rows)
+  )
+  ipcMain.handle('terminals:close', (_, id: number) => closeTerminal(id))
+  ipcMain.handle('terminals:scripts', (_, projectId: number) => projectScripts(projectId))
+  ipcMain.handle('terminals:support', () => ({
+    claude: isClaudeAvailable(),
+    gitBash: findGitBash() !== null
+  }))
+  ipcMain.handle('terminals:getShell', () => getSetting<TerminalShell>(SHELL_KEY, 'powershell'))
+  ipcMain.handle('terminals:setShell', (_, shell: TerminalShell) =>
+    setSetting(SHELL_KEY, shell === 'gitbash' ? 'gitbash' : 'powershell')
+  )
 
   // projects
   ipcMain.handle('projects:list', () => listProjects())

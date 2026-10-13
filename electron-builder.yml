@@ -11,6 +11,8 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  # native terminal binaries (conpty/winpty helpers) must run from disk
+  - node_modules/node-pty/**
 win:
   executableName: codehub
 nsis:

@@ -19,7 +19,7 @@ export function Dashboard({ navigate }: { navigate: Navigate }): React.JSX.Eleme
   return (
     <>
       <PageHeader
-        title={`${greeting(now)} ☾`}
+        title={greeting(now)}
         subtitle={
           !active
             ? `it's ${time} — grab a drink, settle in`

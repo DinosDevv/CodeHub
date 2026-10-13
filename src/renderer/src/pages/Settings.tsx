@@ -3,6 +3,8 @@ import { Card, PageHeader } from '../components/ui'
 import { useAppInfo } from '../hooks/useAppInfo'
 import { useIdleMinutes } from '../hooks/useIdleMinutes'
 import { useRoots } from '../hooks/useRoots'
+import { useShellSetting, useTerminalSupport } from '../hooks/useTerminals'
+import type { TerminalShell } from '../lib/terminals'
 import { scanProjects } from '../lib/projects'
 import { toast } from '../lib/toast'
 
@@ -10,6 +12,12 @@ export function Settings(): React.JSX.Element {
   const { info, error } = useAppInfo()
   const { roots, add, remove } = useRoots()
   const idle = useIdleMinutes()
+  const shell = useShellSetting()
+  const support = useTerminalSupport()
+  const shells: { id: TerminalShell; label: string; available: boolean }[] = [
+    { id: 'powershell', label: 'powershell', available: true },
+    { id: 'gitbash', label: 'git bash', available: support?.gitBash ?? false }
+  ]
 
   const addAndScan = async (): Promise<void> => {
     if (!(await add())) return
@@ -44,6 +52,29 @@ export function Settings(): React.JSX.Element {
           </label>
           <p className="mt-2 text-xs text-muted">
             it picks back up on its own when you return. the idle minutes don&apos;t count.
+          </p>
+        </Card>
+        <Card title="terminal" delay={150}>
+          <p className="mb-3 text-sm text-muted">new terminal tabs open with</p>
+          <div className="flex gap-2">
+            {shells.map((s) => (
+              <button
+                key={s.id}
+                disabled={!s.available}
+                onClick={() => shell.save(s.id)}
+                className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition duration-300 disabled:opacity-40 ${
+                  shell.shell === s.id
+                    ? 'border-accent/50 bg-accent/10 text-accent'
+                    : 'border-line/70 text-muted hover:border-glow/40 hover:text-fg'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted">
+            claude code: {support === null ? '…' : support.claude ? 'installed ✦' : 'not installed'}{' '}
+            · toggle the terminal with Ctrl+`
           </p>
         </Card>
         <Card title="about" delay={180}>

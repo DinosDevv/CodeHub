@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { closeDb, getDb } from './db'
 import { registerIpc } from './ipc'
 import { pauseForQuit, startIdleWatch } from './services/idle'
+import { closeAllTerminals } from './services/terminals'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -27,8 +28,9 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  // Links (e.g. clicked in a terminal) open in the real browser — web links only.
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (/^https?:\/\//i.test(details.url)) shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
@@ -78,6 +80,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.on('will-quit', () => {
+    closeAllTerminals()
     pauseForQuit()
     closeDb()
   })

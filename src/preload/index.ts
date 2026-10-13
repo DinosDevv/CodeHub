@@ -36,6 +36,29 @@ const api: Api = {
     remove: (id) => ipcRenderer.invoke('tasks:remove', id),
     onChanged: (listener) => subscribe('tasks:changed', listener)
   },
+  terminals: {
+    create: (opts) => ipcRenderer.invoke('terminals:create', opts),
+    list: () => ipcRenderer.invoke('terminals:list'),
+    buffer: (id) => ipcRenderer.invoke('terminals:buffer', id),
+    write: (id, data) => ipcRenderer.send('terminals:write', id, data),
+    resize: (id, cols, rows) => ipcRenderer.send('terminals:resize', id, cols, rows),
+    close: (id) => ipcRenderer.invoke('terminals:close', id),
+    scripts: (projectId) => ipcRenderer.invoke('terminals:scripts', projectId),
+    support: () => ipcRenderer.invoke('terminals:support'),
+    getShell: () => ipcRenderer.invoke('terminals:getShell'),
+    setShell: (shell) => ipcRenderer.invoke('terminals:setShell', shell),
+    onData: (listener) => {
+      const handler = (_: unknown, id: number, data: string): void => listener(id, data)
+      ipcRenderer.on('terminals:data', handler)
+      return () => ipcRenderer.removeListener('terminals:data', handler)
+    },
+    onExit: (listener) => {
+      const handler = (_: unknown, id: number, code: number): void => listener(id, code)
+      ipcRenderer.on('terminals:exit', handler)
+      return () => ipcRenderer.removeListener('terminals:exit', handler)
+    },
+    onChanged: (listener) => subscribe('terminals:changed', listener)
+  },
   projects: {
     list: () => ipcRenderer.invoke('projects:list'),
     get: (id) => ipcRenderer.invoke('projects:get', id),

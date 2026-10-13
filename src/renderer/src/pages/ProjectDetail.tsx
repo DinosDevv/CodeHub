@@ -1,5 +1,6 @@
 import { ArrowLeft, Code, Eye, EyeOff, FolderOpen, GitCommitHorizontal } from 'lucide-react'
 import { ProjectSessions } from '../components/ProjectSessions'
+import { ProjectTerminals } from '../components/ProjectTerminals'
 import { RepoBadges } from '../components/RepoBadges'
 import { TaskList } from '../components/TaskList'
 import { Button, Card, Chip, EmptyState, PageHeader } from '../components/ui'
@@ -77,6 +78,7 @@ export function ProjectDetail({
               <EmptyState>couldn&apos;t tell what this one is made of.</EmptyState>
             )}
           </Card>
+          {project.exists && <ProjectTerminals projectId={project.id} delay={90} />}
           <Card title="git" delay={120}>
             {project.exists ? (
               <div className="flex flex-col gap-3">
