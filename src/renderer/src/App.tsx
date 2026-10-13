@@ -32,10 +32,12 @@ function App(): React.JSX.Element {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* key remounts the page so its entrance animation replays on navigation */}
         <main key={routeKey(route)} className="min-h-0 flex-1 overflow-auto p-10">
-          {route.page === 'dashboard' && <Dashboard navigate={navigate} />}
-          {route.page === 'projects' && <Projects navigate={navigate} />}
-          {route.page === 'project' && <ProjectDetail id={route.id} navigate={navigate} />}
-          {route.page === 'settings' && <Settings />}
+          <div className="mx-auto w-full max-w-[1100px]">
+            {route.page === 'dashboard' && <Dashboard navigate={navigate} />}
+            {route.page === 'projects' && <Projects navigate={navigate} />}
+            {route.page === 'project' && <ProjectDetail id={route.id} navigate={navigate} />}
+            {route.page === 'settings' && <Settings />}
+          </div>
         </main>
         <TerminalDock contextProjectId={contextProjectId} />
       </div>

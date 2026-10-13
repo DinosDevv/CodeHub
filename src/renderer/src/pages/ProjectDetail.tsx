@@ -1,16 +1,32 @@
-import { ArrowLeft, Code, Eye, EyeOff, FolderOpen, GitCommitHorizontal } from 'lucide-react'
+import {
+  ArrowLeft,
+  Code,
+  Eye,
+  EyeOff,
+  FolderOpen,
+  GitCommitHorizontal,
+  ListTodo,
+  Sparkles,
+  GitPullRequestArrow
+} from 'lucide-react'
 import { ChangesPanel } from '../components/ChangesPanel'
 import { ClaudeHistory } from '../components/ClaudeHistory'
 import { ProjectSessions } from '../components/ProjectSessions'
 import { ProjectTerminals } from '../components/ProjectTerminals'
 import { RepoBadges } from '../components/RepoBadges'
+import { Tabs, type TabItem } from '../components/Tabs'
 import { TaskList } from '../components/TaskList'
-import { Button, Card, Chip, EmptyState, PageHeader } from '../components/ui'
+import { Button, Card, Chip, EmptyState } from '../components/ui'
+import { useClaudeLive } from '../hooks/useClaude'
 import { useCommits, useRepoStatus } from '../hooks/useGit'
+import { usePref } from '../hooks/usePref'
 import { useProject } from '../hooks/useProject'
+import { claudeStates } from '../lib/claude'
 import type { Navigate } from '../lib/navigation'
 import { openFolder, openInVSCode, prettyPath } from '../lib/projects'
 import { timeAgo } from '../lib/time'
+
+type ProjectTab = 'overview' | 'changes' | 'claude'
 
 export function ProjectDetail({
   id,
@@ -23,6 +39,8 @@ export function ProjectDetail({
   const path = project?.exists ? project.path : null
   const { status, error } = useRepoStatus(path)
   const commits = useCommits(path, 12)
+  const claude = useClaudeLive().find((c) => c.projectId === id) ?? null
+  const [tab, setTab] = usePref<ProjectTab>(`project.${id}.tab`, 'overview')
 
   const back = (
     <button
@@ -45,90 +63,117 @@ export function ProjectDetail({
     )
   }
 
+  const tabs: TabItem<ProjectTab>[] = [
+    { id: 'overview', label: 'overview', icon: <ListTodo size={15} /> },
+    {
+      id: 'changes',
+      label: 'changes',
+      icon: <GitPullRequestArrow size={15} />,
+      badge: status?.changed
+    },
+    {
+      id: 'claude',
+      label: 'claude',
+      icon: <Sparkles size={15} />,
+      dot: claude ? claudeStates[claude.state].dot : undefined
+    }
+  ]
+
   return (
     <>
       {back}
-      <PageHeader
-        title={project.name}
-        subtitle={prettyPath(project.path)}
-        actions={
-          <>
-            <Button variant="ghost" onClick={toggleArchived}>
-              {project.archived ? <Eye size={16} /> : <EyeOff size={16} />}
-              {project.archived ? 'bring back' : 'tuck away'}
-            </Button>
-            <Button variant="ghost" disabled={!project.exists} onClick={() => openFolder(project)}>
-              <FolderOpen size={16} /> folder
-            </Button>
-            <Button disabled={!project.exists} onClick={() => openInVSCode(project)}>
-              <Code size={16} /> open in vs code
-            </Button>
-          </>
-        }
-      />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="flex flex-col gap-5">
-          <Card title="stack" delay={60}>
-            {project.stack.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {project.stack.map((s) => (
-                  <Chip key={s}>{s}</Chip>
-                ))}
-              </div>
-            ) : (
-              <EmptyState>couldn&apos;t tell what this one is made of.</EmptyState>
-            )}
-          </Card>
-          {project.exists && <ProjectTerminals projectId={project.id} delay={90} />}
-          <Card title="git" delay={120}>
+      {/* calm header: who this project is, at a glance */}
+      <header className="mb-6 flex animate-rise flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-4xl font-semibold tracking-tight">{project.name}</h1>
+          <p className="mt-1 truncate text-sm text-muted" title={project.path}>
+            {prettyPath(project.path)}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {project.stack.map((s) => (
+              <Chip key={s}>{s}</Chip>
+            ))}
+            {project.stack.length > 0 && <span className="mx-1 h-4 w-px bg-line/60" />}
             {project.exists ? (
-              <div className="flex flex-col gap-3">
-                <RepoBadges status={status} error={error} />
-                {status && !status.hasRemote && (
-                  <p className="text-xs text-muted">no remote yet — this one lives only here.</p>
-                )}
-              </div>
+              <RepoBadges status={status} error={error} />
             ) : (
               <Chip tone="danger">folder missing</Chip>
             )}
-          </Card>
-          <ProjectSessions projectId={project.id} delay={180} />
-          <ClaudeHistory projectId={project.id} delay={210} />
+          </div>
         </div>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="ghost" onClick={toggleArchived}>
+            {project.archived ? <Eye size={16} /> : <EyeOff size={16} />}
+            {project.archived ? 'bring back' : 'tuck away'}
+          </Button>
+          <Button variant="ghost" disabled={!project.exists} onClick={() => openFolder(project)}>
+            <FolderOpen size={16} /> folder
+          </Button>
+          <Button disabled={!project.exists} onClick={() => openInVSCode(project)}>
+            <Code size={16} /> open in vs code
+          </Button>
+        </div>
+      </header>
 
-        <div className="flex flex-col gap-5 lg:col-span-2">
-          <Card title="tasks" delay={120}>
-            <TaskList projectId={project.id} />
-          </Card>
-          {project.exists && <ChangesPanel path={project.path} delay={150} />}
-          <Card title="recent commits" delay={180}>
-            {commits === null ? (
-              <EmptyState>reading history…</EmptyState>
-            ) : commits.length === 0 ? (
-              <EmptyState>no commits yet — a blank page.</EmptyState>
-            ) : (
-              <ol className="relative flex flex-col">
-                {commits.map((c, i) => (
-                  <li
-                    key={c.hash}
-                    style={{ animationDelay: `${150 + i * 40}ms` }}
-                    className="flex animate-rise items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-surface-2/40"
-                  >
-                    <GitCommitHorizontal size={16} className="mt-0.5 shrink-0 text-glow" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm select-text">{c.message}</p>
-                      <p className="text-xs text-muted">
-                        {c.author} · {timeAgo(c.date)} ·{' '}
-                        <span className="font-mono">{c.hash.slice(0, 7)}</span>
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Card>
-        </div>
+      <Tabs items={tabs} value={tab} onChange={setTab} />
+
+      {/* key replays the gentle entrance when switching tabs */}
+      <div key={tab}>
+        {tab === 'overview' && (
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+            <Card title="tasks" className="lg:col-span-2" delay={0}>
+              <TaskList projectId={project.id} />
+            </Card>
+            <div className="flex flex-col gap-6">
+              {project.exists && <ProjectTerminals projectId={project.id} delay={60} />}
+              <ProjectSessions projectId={project.id} delay={120} />
+            </div>
+          </div>
+        )}
+
+        {tab === 'changes' && (
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              {project.exists ? (
+                <ChangesPanel path={project.path} delay={0} />
+              ) : (
+                <Card>
+                  <EmptyState>the folder is missing, so there&apos;s nothing to commit.</EmptyState>
+                </Card>
+              )}
+            </div>
+            <Card title="recent commits" delay={60}>
+              {commits === null ? (
+                <EmptyState>reading history…</EmptyState>
+              ) : commits.length === 0 ? (
+                <EmptyState>no commits yet — a blank page.</EmptyState>
+              ) : (
+                <ol className="-mx-2 flex flex-col">
+                  {commits.map((c) => (
+                    <li
+                      key={c.hash}
+                      className="flex items-start gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-surface-2/40"
+                    >
+                      <GitCommitHorizontal size={15} className="mt-0.5 shrink-0 text-glow" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm select-text" title={c.message}>
+                          {c.message}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          {timeAgo(c.date)} ·{' '}
+                          <span className="font-mono">{c.hash.slice(0, 7)}</span>
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {tab === 'claude' && <ClaudeHistory projectId={project.id} delay={0} limit={20} />}
       </div>
     </>
   )

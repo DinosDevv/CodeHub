@@ -75,7 +75,7 @@ export function Projects({ navigate }: { navigate: Navigate }): React.JSX.Elemen
           </EmptyState>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {visible.map((p, i) => (
             <ProjectCard
               key={p.id}

@@ -156,7 +156,7 @@ export function ChangesPanel({ path, delay }: { path: string; delay: number }): 
           )}
 
           {/* commit box */}
-          <div className="mt-4 rounded-2xl border border-line/60 bg-bg/30 p-2 transition duration-300 focus-within:border-glow/50 focus-within:shadow-[0_0_20px_-8px_var(--color-glow)]">
+          <div className="mt-4 rounded-2xl border border-line/40 bg-bg/30 p-2 transition duration-300 focus-within:border-glow/50 focus-within:shadow-[0_0_20px_-8px_var(--color-glow)]">
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}

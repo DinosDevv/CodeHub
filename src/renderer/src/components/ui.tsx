@@ -1,14 +1,18 @@
+import { ChevronRight } from 'lucide-react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 // Shared building blocks. Restyle here and every page follows.
 
 export function Card({
   title,
+  action,
   children,
   className = '',
   delay = 0
 }: {
   title?: string
+  /** Small control shown at the right of the title row. */
+  action?: ReactNode
   children: ReactNode
   className?: string
   /** Stagger for the entrance animation, in ms. */
@@ -17,10 +21,58 @@ export function Card({
   return (
     <section
       style={{ animationDelay: `${delay}ms` }}
-      className={`animate-rise rounded-card border border-line/60 bg-surface/55 p-5 shadow-[0_8px_40px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl transition duration-500 hover:border-glow/30 hover:shadow-[0_8px_40px_-12px_var(--color-glow)] ${className}`}
+      className={`animate-rise rounded-card border border-transparent bg-surface/40 p-5 backdrop-blur-xl transition duration-500 hover:border-line/50 ${className}`}
     >
-      {title && <h2 className="mb-3 text-sm font-semibold text-muted lowercase">{title}</h2>}
+      {(title || action) && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          {title && (
+            <h2 className="text-xs font-semibold tracking-wider text-muted lowercase">{title}</h2>
+          )}
+          {action}
+        </div>
+      )}
       {children}
+    </section>
+  )
+}
+
+/** A quiet section header that folds its content away. */
+export function Collapsible({
+  title,
+  open,
+  onToggle,
+  summary,
+  children
+}: {
+  title: string
+  open: boolean
+  onToggle: () => void
+  /** Shown next to the title while folded, e.g. "2h 50m this week". */
+  summary?: ReactNode
+  children: ReactNode
+}): React.JSX.Element {
+  return (
+    <section className="animate-rise">
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        className="group flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-surface/40"
+      >
+        <ChevronRight
+          size={16}
+          className={`text-muted transition duration-300 group-hover:text-accent ${open ? 'rotate-90' : ''}`}
+        />
+        <span className="text-xs font-semibold tracking-wider text-muted lowercase">{title}</span>
+        {!open && summary && <span className="text-sm text-muted/80">· {summary}</span>}
+        <span className="h-px flex-1 bg-line/40" />
+      </button>
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-500 ease-out ${
+          open ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">{children}</div>
+      </div>
     </section>
   )
 }

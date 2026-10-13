@@ -34,7 +34,7 @@ export function TodayHero({ navigate }: { navigate: Navigate }): React.JSX.Eleme
   const claude = useClaudeLive().find((c) => c.projectId === projectId) ?? null
 
   return (
-    <section className="relative animate-rise overflow-hidden rounded-[1.75rem] border border-line/50 bg-surface/45 p-8 shadow-[0_20px_70px_-30px_rgb(0_0_0/0.8)] backdrop-blur-xl lg:col-span-3">
+    <section className="relative animate-rise overflow-hidden rounded-[1.75rem] border border-line/30 bg-surface/45 p-8 backdrop-blur-xl lg:col-span-3">
       <div className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full bg-accent/10 blur-[80px]" />
 
       {active ? (

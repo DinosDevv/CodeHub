@@ -1,6 +1,6 @@
-import { History, Sparkles } from 'lucide-react'
+import { History, Plus, Sparkles } from 'lucide-react'
 import { useClaudeHistory, useClaudeLive } from '../hooks/useClaude'
-import { claudeStates, resumeClaude } from '../lib/claude'
+import { claudeStates, openClaudeTab, resumeClaude } from '../lib/claude'
 import { formatDuration } from '../lib/sessions'
 import { timeAgo } from '../lib/time'
 import { Card, EmptyState } from './ui'
@@ -8,19 +8,32 @@ import { Card, EmptyState } from './ui'
 /** Project page card: earlier Claude conversations here, with a way back into them. */
 export function ClaudeHistory({
   projectId,
-  delay
+  delay,
+  limit = 6
 }: {
   projectId: number
   delay: number
+  limit?: number
 }): React.JSX.Element {
-  const history = useClaudeHistory(projectId)
+  const history = useClaudeHistory(projectId, limit)
   const live = useClaudeLive()
 
   return (
-    <Card title="claude history" delay={delay}>
+    <Card
+      title="claude history"
+      delay={delay}
+      action={
+        <button
+          onClick={() => openClaudeTab(projectId)}
+          className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-muted transition hover:bg-accent/15 hover:text-accent"
+        >
+          <Plus size={13} /> new claude tab
+        </button>
+      }
+    >
       {history === null ? null : history.length === 0 ? (
         <EmptyState>
-          no claude conversations here yet — they show up once claude code is connected.
+          no claude conversations here yet — start one with &ldquo;new claude tab&rdquo;.
         </EmptyState>
       ) : (
         <ul className="-mx-2 flex flex-col gap-1">

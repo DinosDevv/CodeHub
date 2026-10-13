@@ -20,7 +20,7 @@ export function ProjectCard({
     <article
       onClick={onOpen}
       style={{ animationDelay: `${delay}ms` }}
-      className={`group flex animate-rise cursor-pointer flex-col gap-3 rounded-card border border-line/60 bg-surface/55 p-5 backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-glow/30 hover:shadow-[0_12px_40px_-14px_var(--color-glow)] ${
+      className={`group flex animate-rise cursor-pointer flex-col gap-3 rounded-card border border-transparent bg-surface/40 p-5 backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-line/50 hover:bg-surface/55 ${
         project.archived ? 'opacity-50' : ''
       }`}
     >

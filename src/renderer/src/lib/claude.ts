@@ -118,3 +118,13 @@ export async function resumeClaude(projectId: number, sessionId: string): Promis
   }
   await openTerminal({ projectId, kind: 'claude', resumeSessionId: sessionId, title: 'resumed' })
 }
+
+/** Opens a fresh Claude tab in a project (or the install hint if Claude is missing). */
+export async function openClaudeTab(projectId: number): Promise<void> {
+  const support = await getTerminalSupport()
+  if (!support.claude) {
+    showClaudeHint(true)
+    return
+  }
+  await openTerminal({ projectId, kind: 'claude' })
+}

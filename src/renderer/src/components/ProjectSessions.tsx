@@ -34,7 +34,7 @@ export function ProjectSessions({
             <li key={s.id} className="text-sm">
               <div className="flex justify-between gap-2">
                 <span className="text-muted">{sessionDateLabel(s.startedAt)}</span>
-                <span className="font-mono">{formatDuration(s.durationMs)}</span>
+                <span className="font-display">{formatDuration(s.durationMs)}</span>
               </div>
               {s.commitCount > 0 && (
                 <p className="flex items-center gap-1 text-xs text-glow">
