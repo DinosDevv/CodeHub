@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/nunito';
+@import '@fontsource-variable/jetbrains-mono';
+
+/*
+ * Design tokens — cozy, ambient, dark, lofi.
+ * Every color/font/motion in the UI comes from here, so restyling the app
+ * means editing this block. Components only use the semantic names
+ * (bg-surface, text-muted, border-line, bg-accent, text-glow, animate-rise, ...).
+ */
+@theme {
+  /* late-night room: deep plum walls, warm lamp light, lavender neon */
+  --color-bg: #120f1c;
+  --color-surface: #1c1729;
+  --color-surface-2: #261f37;
+  --color-line: #332a49;
+  --color-fg: #f1e9e1;
+  --color-muted: #9d91b5;
+  --color-accent: #f4a46a; /* warm lamp amber */
+  --color-accent-fg: #22160f;
+  --color-glow: #b9a4ff; /* soft lavender neon */
+  --color-success: #8fd6a8;
+  --color-warning: #f2c46d;
+  --color-danger: #f28b8b;
+
+  --font-sans: 'Nunito Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'Cascadia Code', Consolas, monospace;
+
+  --radius-card: 1.25rem;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-drift-a: drift-a 48s ease-in-out infinite alternate;
+  --animate-drift-b: drift-b 62s ease-in-out infinite alternate;
+  --animate-drift-c: drift-c 55s ease-in-out infinite alternate;
+  --animate-float: float 14s ease-in-out infinite;
+  --animate-breathe: breathe 6s ease-in-out infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes drift-a {
+    from {
+      transform: translate(-10%, -8%) scale(1);
+    }
+    to {
+      transform: translate(18%, 12%) scale(1.25);
+    }
+  }
+  @keyframes drift-b {
+    from {
+      transform: translate(12%, 10%) scale(1.15);
+    }
+    to {
+      transform: translate(-16%, -6%) scale(0.95);
+    }
+  }
+  @keyframes drift-c {
+    from {
+      transform: translate(0, 14%) scale(0.9);
+    }
+    to {
+      transform: translate(-12%, -14%) scale(1.2);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    20%,
+    80% {
+      opacity: var(--speck-opacity, 0.5);
+    }
+    50% {
+      transform: translateY(-40px);
+    }
+  }
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Film grain over everything — the lofi "texture". */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
